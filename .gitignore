@@ -1,0 +1,20 @@
+*~
+*.swp
+*.pyc
+__pycache__/
+
+
+# for vscode
+.vscode
+
+
+# for snakeamke
+.snakemake*
+.snakemake/*
+
+
+# custom gitignore
+raw_sanger/*
+logs/*
+output*
+genomic_data/*
