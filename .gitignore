@@ -15,6 +15,7 @@ __pycache__/
 
 # custom gitignore
 raw_sanger/*
+raw_fastq/*
 logs/*
 output*
 genomic_data/*
