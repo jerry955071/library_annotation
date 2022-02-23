@@ -5,18 +5,27 @@ configfile: "config.json"
 # all
 rule all:
     input:
-        expand("output_samtools/stats/{fname}_{spe}.stats", 
+        expand("output_samtools/stats/{fname}.stats", 
             fname=["merged", "single", "paired1", "paired2"],
-            spe=["human", "mouse"]
         ),
-        expand("output_samtools/flagstats/{fname}_{spe}.flagstats", 
-            fname=["merged", "single", "paired1", "paired2"],
-            spe=["human", "mouse"]
+        expand("output_samtools/flagstats/{fname}.flagstats", 
+            fname=["merged", "single", "paired1", "paired2"]
         ),
-        expand("output_mappingReporter/{fname}_{spe}_summary.tsv", 
-            fname=["merged", "single", "paired1", "paired2"],
-            spe=["human", "mouse"]
+        expand("output_mappingReporter/{fname}_summary.tsv", 
+            fname=["merged", "single", "paired1", "paired2"]
         )
+        # expand("output_samtools/stats/{fname}_{spe}.stats", 
+        #     fname=["merged", "single", "paired1", "paired2"],
+        #     spe=["human", "mouse"]
+        # ),
+        # expand("output_samtools/flagstats/{fname}_{spe}.flagstats", 
+        #     fname=["merged", "single", "paired1", "paired2"],
+        #     spe=["human", "mouse"]
+        # ),
+        # expand("output_mappingReporter/{fname}_{spe}_summary.tsv", 
+        #     fname=["merged", "single", "paired1", "paired2"],
+        #     spe=["human", "mouse"]
+        # )
 
 
 # extract CDS from Gencode reference
@@ -28,7 +37,8 @@ rule extract_cds:
         mouse="genomic_data/gencode.vM27.pc_transcripts.fa"
     output:
         human="genomic_data/gencode.v38.cds.fa",
-        mouse="genomic_data/gencode.vM27.cds.fa"
+        mouse="genomic_data/gencode.vM27.cds.fa",
+        hnm="genomic_data/gencode.HM.cds.fa"
     log:
         "logs/extract_cds.log"
     shell:
@@ -44,6 +54,10 @@ rule extract_cds:
             -i {input.mouse} \
             -o {output.mouse} \
             2> {log} 1> {log}
+        
+        
+        # combine human and mouse cds
+        cat {output.human} {output.mouse} > {output.hnm}
         """
  
 
@@ -83,7 +97,7 @@ rule fastp_qc:
     params:
         length_required=50,
 	    mean_q=20,
-        cut_window_size=20,
+        cut_window_size=10,
         out_dir="output_fastp"
     log:
         "logs/fastp_{fname}.log"
@@ -138,34 +152,22 @@ rule classifier:
 
 # align reads to human and mouse protein coding transcripts
 rule minimap2:
-    threads: 4
+    threads: 8
     input:
         query="output_classifier/{fname}.fq",
-        ref_h="genomic_data/gencode.v38.cds.fa",
-        ref_m="genomic_data/gencode.vM27.cds.fa"
+        ref="genomic_data/gencode.HM.cds.fa"
     output:
-        human="output_minimap2/{fname}_human.sam",
-        mouse="output_minimap2/{fname}_mouse.sam"
+        "output_minimap2/{fname}.sam"
     log:
-        human="logs/minimap2_{fname}_human.log",
-        mouse="logs/minimap2_{fname}_mouse.log"
+        "logs/minimap2_{fname}.log"
     shell:
         """
-        # map to human protein coding transcripts
         minimap2 -ax asm5 --eqx \
             -t {threads} \
-            -o {output.human} \
-            {input.ref_h} \
+            -o {output} \
+            {input.ref} \
             {input.query} \
-            2> {log.human} 1> {log.human}
-
-        # map to mouse protein coding transcripts
-        minimap2 -ax asm5 --eqx \
-            -t {threads} \
-            -o {output.mouse} \
-            {input.ref_m} \
-            {input.query} \
-            2> {log.mouse} 1> {log.mouse}
+            2> {log} 1> {log}
         """
 
 
@@ -201,7 +203,7 @@ rule samtools_flagstats:
         """
 
 
-# remove unmapped/secondary/supplementary records
+# remove secondary/supplementary records
 rule samtools_view:
     input:
         "output_minimap2/{fname}.sam"
@@ -212,7 +214,6 @@ rule samtools_view:
     shell:
         """
         samtools view \
-            -F 4 `# remove unmapped records` \
             -F 256 `# remove secondary alignments` \
             -F 2048 `# remove supplementary alignments` \
             -h \
@@ -230,7 +231,8 @@ rule mappingReporter:
         "output_samtools/filtered/{fname}.sam"
     output:
         out_summary="output_mappingReporter/{fname}_summary.tsv",
-        out_hist="output_mappingReporter/{fname}_hist.txt"
+        out_hist="output_mappingReporter/{fname}_hist.txt",
+        out_unmapped="output_mappingReporter/{fname}_unmapped.fq"
     log:
         "logs/mappingReporter_{fname}.log"
     shell:
@@ -239,6 +241,7 @@ rule mappingReporter:
             -i {input} \
             --out_summary {output.out_summary} \
             --out_hist {output.out_hist} \
+            --out_unmapped {output.out_unmapped} \
             2> {log} 1> {log}
         """
 
@@ -287,3 +290,35 @@ rule template:
 #             2> {log} 1> {log}
 #         """
 
+
+# # align reads to human and mouse protein coding transcripts
+# rule minimap2:
+#     threads: 4
+#     input:
+#         query="output_classifier/{fname}.fq",
+#         ref_h="genomic_data/gencode.v38.cds.fa",
+#         ref_m="genomic_data/gencode.vM27.cds.fa"
+#     output:
+#         human="output_minimap2/{fname}_human.sam",
+#         mouse="output_minimap2/{fname}_mouse.sam"
+#     log:
+#         human="logs/minimap2_{fname}_human.log",
+#         mouse="logs/minimap2_{fname}_mouse.log"
+#     shell:
+#         """
+#         # map to human protein coding transcripts
+#         minimap2 -ax asm5 --eqx \
+#             -t {threads} \
+#             -o {output.human} \
+#             {input.ref_h} \
+#             {input.query} \
+#             2> {log.human} 1> {log.human}
+
+#         # map to mouse protein coding transcripts
+#         minimap2 -ax asm5 --eqx \
+#             -t {threads} \
+#             -o {output.mouse} \
+#             {input.ref_m} \
+#             {input.query} \
+#             2> {log.mouse} 1> {log.mouse}
+#         """
