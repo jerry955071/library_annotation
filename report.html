@@ -406,7 +406,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
       <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="https://snakemake.readthedocs.io">Snakemake Report</a>
       <div class="nav navbar-nav navbar-center" id="brand"></div>
       <ul class="nav navbar-nav navbar-right" style="padding-right: 10px;">
-        <li class="text-white">Mon Feb 21 17:01:33 2022 CST</li>
+        <li class="text-white">Wed Feb 23 21:00:40 2022 CST</li>
         <li><a class="text-white" href="https://snakemake.readthedocs.io">Snakemake 6.7.0</a></li>
       </ul>
       <!--<input id="searchbar" class="invisible form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">-->
@@ -531,11 +531,11 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
           </div>
         </div>
 
-        <div data-rule="samtools_view" class="modal rule-properties" tabindex="-1" role="dialog">
+        <div data-rule="samtools_stats" class="modal rule-properties" tabindex="-1" role="dialog">
           <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title">Rule samtools_view</h5>
+                <h5 class="modal-title">Rule samtools_stats</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
@@ -545,7 +545,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                   <caption>Rule properties</caption>
                   <tbody>
                     <tr>
-                      <th scope="row">Jobs</th><td>8</td>
+                      <th scope="row">Jobs</th><td>4</td>
                     </tr>
 
                     <tr>
@@ -565,7 +565,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                     <tr>
                       <td class="rule-property" colspan=2>
                         <ul>
-                            <li>output_samtools/filtered/{fname}.sam</li>
+                            <li>output_samtools/stats/{fname}.stats</li>
                         </ul>
                       </td>
                     </tr>
@@ -578,7 +578,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                     <tr>
                       <td class="rule-property" colspan=2>
                         <table class="sourcetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        samtools view             -F <span class="m">4</span> <span class="sb">`</span><span class="c1"># remove unmapped records`             -F 256 `# remove secondary alignments`             -F 2048 `# remove supplementary alignments`             -h             -o {output}             {input}             2&gt; {log} 1&gt; {log}</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        samtools stats             <span class="o">{</span>input<span class="o">}</span> &gt; <span class="o">{</span>output<span class="o">}</span>             <span class="m">2</span>&gt; <span class="o">{</span>log<span class="o">}</span>
         
 </code></pre></div>
 </td></tr></table>
@@ -614,8 +614,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                       <td class="rule-property" colspan=2>
                         <ul>
                             <li>output_classifier/{fname}.fq</li>
-                            <li>genomic_data/gencode.v38.cds.fa</li>
-                            <li>genomic_data/gencode.vM27.cds.fa</li>
+                            <li>genomic_data/gencode.HM.cds.fa</li>
                         </ul>
                       </td>
                     </tr>
@@ -626,8 +625,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                     <tr>
                       <td class="rule-property" colspan=2>
                         <ul>
-                            <li>output_minimap2/{fname}_human.sam</li>
-                            <li>output_minimap2/{fname}_mouse.sam</li>
+                            <li>output_minimap2/{fname}.sam</li>
                         </ul>
                       </td>
                     </tr>
@@ -640,15 +638,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                     <tr>
                       <td class="rule-property" colspan=2>
                         <table class="sourcetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        <span class="c1"># map to human protein coding transcripts</span>
-        minimap2 -ax asm5 --eqx             -t <span class="o">{</span>threads<span class="o">}</span>             -o <span class="o">{</span>output.human<span class="o">}</span>             <span class="o">{</span>input.ref_h<span class="o">}</span>             <span class="o">{</span>input.query<span class="o">}</span>             <span class="m">2</span>&gt; <span class="o">{</span>log.human<span class="o">}</span> <span class="m">1</span>&gt; <span class="o">{</span>log.human<span class="o">}</span>
-
-        <span class="c1"># map to mouse protein coding transcripts</span>
-        minimap2 -ax asm5 --eqx             -t <span class="o">{</span>threads<span class="o">}</span>             -o <span class="o">{</span>output.mouse<span class="o">}</span>             <span class="o">{</span>input.ref_m<span class="o">}</span>             <span class="o">{</span>input.query<span class="o">}</span>             <span class="m">2</span>&gt; <span class="o">{</span>log.mouse<span class="o">}</span> <span class="m">1</span>&gt; <span class="o">{</span>log.mouse<span class="o">}</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        minimap2 -ax asm5 --eqx             -t <span class="o">{</span>threads<span class="o">}</span>             -o <span class="o">{</span>output<span class="o">}</span>             <span class="o">{</span>input.ref<span class="o">}</span>             <span class="o">{</span>input.query<span class="o">}</span>             <span class="m">2</span>&gt; <span class="o">{</span>log<span class="o">}</span> <span class="m">1</span>&gt; <span class="o">{</span>log<span class="o">}</span>
         
 </code></pre></div>
 </td></tr></table>
@@ -787,11 +777,11 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
             </div>
           </div>
         </div>
-        <div data-rule="fastp" class="modal rule-properties" tabindex="-1" role="dialog">
+        <div data-rule="fastp_qc" class="modal rule-properties" tabindex="-1" role="dialog">
           <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title">Rule fastp</h5>
+                <h5 class="modal-title">Rule fastp_qc</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
@@ -835,7 +825,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                     <tr>
                       <td class="rule-property" colspan=2>
                         <table class="sourcetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        fastp             --phred64             --in1 <span class="o">{</span>input<span class="o">}</span>             --out1 <span class="o">{</span>output.out<span class="o">}</span>             --failed_out <span class="o">{</span>output.failed<span class="o">}</span>             --cut_front             --cut_tail              --cut_mean_quality <span class="o">{</span>params.q<span class="o">}</span> 	        --length_required <span class="o">{</span>params.length_required<span class="o">}</span>             --json <span class="s1">&#39;{params.out_dir}/{wildcards.fname}_report.json&#39;</span>             --html <span class="s1">&#39;{params.out_dir}/{wildcards.fname}_report.html&#39;</span>             <span class="m">2</span>&gt; <span class="o">{</span>log.log<span class="o">}</span> <span class="m">1</span>&gt; <span class="o">{</span>log.log<span class="o">}</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        fastp             --phred64             --in1 <span class="o">{</span>input<span class="o">}</span>             --out1 <span class="o">{</span>output.out<span class="o">}</span>             --failed_out <span class="o">{</span>output.failed<span class="o">}</span>             --cut_mean_quality <span class="o">{</span>params.mean_q<span class="o">}</span>             --cut_front             --cut_tail              --cut_window_size <span class="o">{</span>params.cut_window_size<span class="o">}</span> 	        --length_required <span class="o">{</span>params.length_required<span class="o">}</span>             --json <span class="s1">&#39;{params.out_dir}/{wildcards.fname}_report.json&#39;</span>             --html <span class="s1">&#39;{params.out_dir}/{wildcards.fname}_report.html&#39;</span>             <span class="m">2</span>&gt; <span class="o">{</span>log<span class="o">}</span> <span class="m">1</span>&gt; <span class="o">{</span>log<span class="o">}</span>
         
 </code></pre></div>
 </td></tr></table>
@@ -1006,6 +996,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                         <ul>
                             <li>genomic_data/gencode.v38.cds.fa</li>
                             <li>genomic_data/gencode.vM27.cds.fa</li>
+                            <li>genomic_data/gencode.HM.cds.fa</li>
                         </ul>
                       </td>
                     </tr>
@@ -1079,75 +1070,24 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                     </tr>
                     <tr>
                       <td class="rule-property" colspan=2>
-                        <table class="sourcetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        <span class="c1"># human pc_transcripts to cds</span>
+                        <table class="sourcetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        <span class="c1"># human pc_transcripts to cds</span>
         python scripts/extract_cds.py             -i <span class="o">{</span>input.human<span class="o">}</span>             -o <span class="o">{</span>output.human<span class="o">}</span>             <span class="m">2</span>&gt; <span class="o">{</span>log<span class="o">}</span> <span class="m">1</span>&gt; <span class="o">{</span>log<span class="o">}</span>
         
         <span class="c1"># mouse pc_transcripts to cds</span>
         python scripts/extract_cds.py             -i <span class="o">{</span>input.mouse<span class="o">}</span>             -o <span class="o">{</span>output.mouse<span class="o">}</span>             <span class="m">2</span>&gt; <span class="o">{</span>log<span class="o">}</span> <span class="m">1</span>&gt; <span class="o">{</span>log<span class="o">}</span>
         
-</code></pre></div>
-</td></tr></table>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div data-rule="samtools_stats" class="modal rule-properties" tabindex="-1" role="dialog">
-          <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Rule samtools_stats</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <table class="table w-auto table-sm table-borderless ruletable">
-                  <caption>Rule properties</caption>
-                  <tbody>
-                    <tr>
-                      <th scope="row">Jobs</th><td>8</td>
-                    </tr>
-
-                    <tr>
-                      <th scope="row" colspan=2>Input files</th>
-                    </tr>
-                    <tr>
-                      <td class="rule-property" colspan=2>
-                        <ul>
-                            <li>output_minimap2/{fname}.sam</li>
-                        </ul>
-                      </td>
-                    </tr>
-
-                    <tr>
-                      <th scope="row" colspan=2>Output files</th>
-                    </tr>
-                    <tr>
-                      <td class="rule-property" colspan=2>
-                        <ul>
-                            <li>output_samtools/stats/{fname}.stats</li>
-                        </ul>
-                      </td>
-                    </tr>
-
-
-
-                    <tr>
-                      <th scope="row" colspan=2>Code</th>
-                    </tr>
-                    <tr>
-                      <td class="rule-property" colspan=2>
-                        <table class="sourcetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        samtools stats             <span class="o">{</span>input<span class="o">}</span> &gt; <span class="o">{</span>output<span class="o">}</span>             <span class="m">2</span>&gt; <span class="o">{</span>log<span class="o">}</span>
+        
+        <span class="c1"># combine human and mouse cds</span>
+        cat <span class="o">{</span>output.human<span class="o">}</span> <span class="o">{</span>output.mouse<span class="o">}</span> &gt; <span class="o">{</span>output.hnm<span class="o">}</span>
         
 </code></pre></div>
 </td></tr></table>
@@ -1173,7 +1113,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                   <caption>Rule properties</caption>
                   <tbody>
                     <tr>
-                      <th scope="row">Jobs</th><td>8</td>
+                      <th scope="row">Jobs</th><td>4</td>
                     </tr>
 
                     <tr>
@@ -1232,7 +1172,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                   <caption>Rule properties</caption>
                   <tbody>
                     <tr>
-                      <th scope="row">Jobs</th><td>8</td>
+                      <th scope="row">Jobs</th><td>4</td>
                     </tr>
 
                     <tr>
@@ -1254,6 +1194,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                         <ul>
                             <li>output_mappingReporter/{fname}_summary.tsv</li>
                             <li>output_mappingReporter/{fname}_hist.txt</li>
+                            <li>output_mappingReporter/{fname}_unmapped.fq</li>
                         </ul>
                       </td>
                     </tr>
@@ -1328,7 +1269,66 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                     <tr>
                       <td class="rule-property" colspan=2>
                         <table class="sourcetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        python scripts/mappingReporter.py             -i <span class="o">{</span>input<span class="o">}</span>             --out_summary <span class="o">{</span>output.out_summary<span class="o">}</span>             --out_hist <span class="o">{</span>output.out_hist<span class="o">}</span>             <span class="m">2</span>&gt; <span class="o">{</span>log<span class="o">}</span> <span class="m">1</span>&gt; <span class="o">{</span>log<span class="o">}</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        python scripts/mappingReporter.py             -i <span class="o">{</span>input<span class="o">}</span>             --out_summary <span class="o">{</span>output.out_summary<span class="o">}</span>             --out_hist <span class="o">{</span>output.out_hist<span class="o">}</span>             --out_unmapped <span class="o">{</span>output.out_unmapped<span class="o">}</span>             <span class="m">2</span>&gt; <span class="o">{</span>log<span class="o">}</span> <span class="m">1</span>&gt; <span class="o">{</span>log<span class="o">}</span>
+        
+</code></pre></div>
+</td></tr></table>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div data-rule="samtools_view" class="modal rule-properties" tabindex="-1" role="dialog">
+          <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Rule samtools_view</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <table class="table w-auto table-sm table-borderless ruletable">
+                  <caption>Rule properties</caption>
+                  <tbody>
+                    <tr>
+                      <th scope="row">Jobs</th><td>4</td>
+                    </tr>
+
+                    <tr>
+                      <th scope="row" colspan=2>Input files</th>
+                    </tr>
+                    <tr>
+                      <td class="rule-property" colspan=2>
+                        <ul>
+                            <li>output_minimap2/{fname}.sam</li>
+                        </ul>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <th scope="row" colspan=2>Output files</th>
+                    </tr>
+                    <tr>
+                      <td class="rule-property" colspan=2>
+                        <ul>
+                            <li>output_samtools/filtered/{fname}.sam</li>
+                        </ul>
+                      </td>
+                    </tr>
+
+
+
+                    <tr>
+                      <th scope="row" colspan=2>Code</th>
+                    </tr>
+                    <tr>
+                      <td class="rule-property" colspan=2>
+                        <table class="sourcetable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div class="source"><pre><span></span><code>        samtools view             -F <span class="m">256</span> <span class="sb">`</span><span class="c1"># remove secondary alignments`             -F 2048 `# remove supplementary alignments`             -h             -o {output}             {input}             2&gt; {log} 1&gt; {log}</span>
         
 </code></pre></div>
 </td></tr></table>
@@ -2001,7 +2001,7 @@ if (typeof module !== 'undefined') {
 
       var rulegraph_spec = {
         "$schema": "https://vega.github.io/schema/vega/v5.json",
-        "width": 511.84,
+        "width": 498.84,
         "height": 470.0,
         "padding": 0,
         "autosize": "none",
@@ -2014,11 +2014,11 @@ if (typeof module !== 'undefined') {
         "data": [
           {
             "name": "node-data",
-            "values": [{'rule': 'all', 'fx': 281.84, 'fy': 450.0}, {'rule': 'classifier', 'fx': 283.84, 'fy': 162.0}, {'rule': 'extract_cds', 'fx': 149.84, 'fy': 162.0}, {'rule': 'fastp', 'fx': 283.84, 'fy': 90.0}, {'rule': 'mappingReporter', 'fx': 342.84, 'fy': 378.0}, {'rule': 'minimap2', 'fx': 216.84, 'fy': 234.0}, {'rule': 'samtools_flagstats', 'fx': 96.841, 'fy': 378.0}, {'rule': 'samtools_stats', 'fx': 216.84, 'fy': 306.0}, {'rule': 'samtools_view', 'fx': 391.84, 'fy': 306.0}, {'rule': 'sanger2fastq', 'fx': 283.84, 'fy': 18.0}]
+            "values": [{'rule': 'all', 'fx': 221.84, 'fy': 450.0}, {'rule': 'classifier', 'fx': 270.84, 'fy': 162.0}, {'rule': 'extract_cds', 'fx': 136.84, 'fy': 162.0}, {'rule': 'fastp_qc', 'fx': 270.84, 'fy': 90.0}, {'rule': 'mappingReporter', 'fx': 360.84, 'fy': 378.0}, {'rule': 'minimap2', 'fx': 203.84, 'fy': 234.0}, {'rule': 'samtools_flagstats', 'fx': 96.841, 'fy': 378.0}, {'rule': 'samtools_stats', 'fx': 203.84, 'fy': 306.0}, {'rule': 'samtools_view', 'fx': 378.84, 'fy': 306.0}, {'rule': 'sanger2fastq', 'fx': 270.84, 'fy': 18.0}]
           },
           {
             "name": "link-data",
-            "values": [{'target': 1, 'source': 5, 'value': 1}, {'target': 2, 'source': 5, 'value': 1}, {'target': 3, 'source': 1, 'value': 1}, {'target': 4, 'source': 0, 'value': 1}, {'target': 5, 'source': 8, 'value': 1}, {'target': 5, 'source': 7, 'value': 1}, {'target': 5, 'source': 6, 'value': 1}, {'target': 6, 'source': 0, 'value': 1}, {'target': 7, 'source': 0, 'value': 1}, {'target': 8, 'source': 0, 'value': 1}, {'target': 8, 'source': 4, 'value': 1}, {'target': 9, 'source': 3, 'value': 1}]
+            "values": [{'target': 1, 'source': 5, 'value': 1}, {'target': 2, 'source': 5, 'value': 1}, {'target': 3, 'source': 1, 'value': 1}, {'target': 4, 'source': 0, 'value': 1}, {'target': 5, 'source': 7, 'value': 1}, {'target': 5, 'source': 6, 'value': 1}, {'target': 5, 'source': 8, 'value': 1}, {'target': 6, 'source': 0, 'value': 1}, {'target': 7, 'source': 0, 'value': 1}, {'target': 8, 'source': 4, 'value': 1}, {'target': 9, 'source': 3, 'value': 1}]
           }
         ],
 
@@ -2126,7 +2126,7 @@ if (typeof module !== 'undefined') {
       var runtimes_spec = {
         "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
         "description": "Runtimes of jobs.",
-        "data": {"values": [{'rule': 'classifier', 'runtime': 2.6360232830047607}, {'rule': 'extract_cds', 'runtime': 6.108053684234619}, {'rule': 'fastp', 'runtime': 0.42000389099121094}, {'rule': 'fastp', 'runtime': 0.4160037040710449}, {'rule': 'mappingReporter', 'runtime': 0.5120043754577637}, {'rule': 'mappingReporter', 'runtime': 0.49200439453125}, {'rule': 'mappingReporter', 'runtime': 0.5040042400360107}, {'rule': 'mappingReporter', 'runtime': 0.48000407218933105}, {'rule': 'mappingReporter', 'runtime': 0.5320045948028564}, {'rule': 'mappingReporter', 'runtime': 0.5080044269561768}, {'rule': 'mappingReporter', 'runtime': 0.5120043754577637}, {'rule': 'mappingReporter', 'runtime': 0.5000042915344238}, {'rule': 'minimap2', 'runtime': 4.896043062210083}, {'rule': 'minimap2', 'runtime': 4.996043920516968}, {'rule': 'minimap2', 'runtime': 4.88804292678833}, {'rule': 'minimap2', 'runtime': 4.904043197631836}, {'rule': 'samtools_flagstats', 'runtime': 0.3800032138824463}, {'rule': 'samtools_flagstats', 'runtime': 0.2720024585723877}, {'rule': 'samtools_flagstats', 'runtime': 0.3560030460357666}, {'rule': 'samtools_flagstats', 'runtime': 0.22400212287902832}, {'rule': 'samtools_flagstats', 'runtime': 0.3800034523010254}, {'rule': 'samtools_flagstats', 'runtime': 0.25600242614746094}, {'rule': 'samtools_flagstats', 'runtime': 0.33600306510925293}, {'rule': 'samtools_flagstats', 'runtime': 0.22400188446044922}, {'rule': 'samtools_stats', 'runtime': 0.4120035171508789}, {'rule': 'samtools_stats', 'runtime': 0.22400188446044922}, {'rule': 'samtools_stats', 'runtime': 0.37200331687927246}, {'rule': 'samtools_stats', 'runtime': 0.26400232315063477}, {'rule': 'samtools_stats', 'runtime': 0.34400296211242676}, {'rule': 'samtools_stats', 'runtime': 0.23600196838378906}, {'rule': 'samtools_stats', 'runtime': 0.3520030975341797}, {'rule': 'samtools_stats', 'runtime': 0.22400212287902832}, {'rule': 'samtools_view', 'runtime': 0.39600348472595215}, {'rule': 'samtools_view', 'runtime': 0.26000237464904785}, {'rule': 'samtools_view', 'runtime': 0.4440040588378906}, {'rule': 'samtools_view', 'runtime': 0.23600196838378906}, {'rule': 'samtools_view', 'runtime': 0.4360036849975586}, {'rule': 'samtools_view', 'runtime': 0.2520022392272949}, {'rule': 'samtools_view', 'runtime': 0.3880033493041992}, {'rule': 'samtools_view', 'runtime': 0.2480020523071289}, {'rule': 'sanger2fastq', 'runtime': 3.256028413772583}]},
+        "data": {"values": [{'rule': 'classifier', 'runtime': 2.768031597137451}, {'rule': 'extract_cds', 'runtime': 6.6880762577056885}, {'rule': 'fastp_qc', 'runtime': 0.4080045223236084}, {'rule': 'fastp_qc', 'runtime': 0.3760042190551758}, {'rule': 'mappingReporter', 'runtime': 0.5520062446594238}, {'rule': 'mappingReporter', 'runtime': 0.5800065994262695}, {'rule': 'mappingReporter', 'runtime': 0.6480073928833008}, {'rule': 'mappingReporter', 'runtime': 0.536005973815918}, {'rule': 'minimap2', 'runtime': 4.340049743652344}, {'rule': 'minimap2', 'runtime': 4.4480507373809814}, {'rule': 'minimap2', 'runtime': 4.16004753112793}, {'rule': 'minimap2', 'runtime': 4.428050518035889}, {'rule': 'samtools_flagstats', 'runtime': 0.4640054702758789}, {'rule': 'samtools_flagstats', 'runtime': 0.4600052833557129}, {'rule': 'samtools_flagstats', 'runtime': 0.4600050449371338}, {'rule': 'samtools_flagstats', 'runtime': 0.4640052318572998}, {'rule': 'samtools_stats', 'runtime': 0.47600531578063965}, {'rule': 'samtools_stats', 'runtime': 0.48000526428222656}, {'rule': 'samtools_stats', 'runtime': 0.4640052318572998}, {'rule': 'samtools_stats', 'runtime': 0.48000550270080566}, {'rule': 'samtools_view', 'runtime': 0.4680051803588867}, {'rule': 'samtools_view', 'runtime': 0.532006025314331}, {'rule': 'samtools_view', 'runtime': 0.5160059928894043}, {'rule': 'samtools_view', 'runtime': 0.5280060768127441}, {'rule': 'sanger2fastq', 'runtime': 3.144036054611206}]},
         "mark": "point",
         "encoding": {
           "x": {"field": "runtime", "type": "quantitative",
@@ -2143,7 +2143,7 @@ if (typeof module !== 'undefined') {
         "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
         "description": "Timeline of jobs.",
         "data": {
-          "values": [{'rule': 'classifier', 'starttime': '2022-02-21T16:39:09.772573', 'endtime': '2022-02-21T16:39:12.408596'}, {'rule': 'extract_cds', 'starttime': '2022-02-21T16:39:06.020540', 'endtime': '2022-02-21T16:39:12.128594'}, {'rule': 'fastp', 'starttime': '2022-02-21T16:39:09.312569', 'endtime': '2022-02-21T16:39:09.732573'}, {'rule': 'fastp', 'starttime': '2022-02-21T16:39:09.320569', 'endtime': '2022-02-21T16:39:09.736573'}, {'rule': 'mappingReporter', 'starttime': '2022-02-21T16:39:18.020646', 'endtime': '2022-02-21T16:39:18.532650'}, {'rule': 'mappingReporter', 'starttime': '2022-02-21T16:39:17.896644', 'endtime': '2022-02-21T16:39:18.388649'}, {'rule': 'mappingReporter', 'starttime': '2022-02-21T16:39:18.108646', 'endtime': '2022-02-21T16:39:18.612651'}, {'rule': 'mappingReporter', 'starttime': '2022-02-21T16:39:17.968645', 'endtime': '2022-02-21T16:39:18.448649'}, {'rule': 'mappingReporter', 'starttime': '2022-02-21T16:39:17.904644', 'endtime': '2022-02-21T16:39:18.436649'}, {'rule': 'mappingReporter', 'starttime': '2022-02-21T16:39:17.728643', 'endtime': '2022-02-21T16:39:18.236647'}, {'rule': 'mappingReporter', 'starttime': '2022-02-21T16:39:17.956645', 'endtime': '2022-02-21T16:39:18.468649'}, {'rule': 'mappingReporter', 'starttime': '2022-02-21T16:39:17.784643', 'endtime': '2022-02-21T16:39:18.284648'}, {'rule': 'minimap2', 'starttime': '2022-02-21T16:39:12.488597', 'endtime': '2022-02-21T16:39:17.384640'}, {'rule': 'minimap2', 'starttime': '2022-02-21T16:39:12.452597', 'endtime': '2022-02-21T16:39:17.448641'}, {'rule': 'minimap2', 'starttime': '2022-02-21T16:39:12.480597', 'endtime': '2022-02-21T16:39:17.368640'}, {'rule': 'minimap2', 'starttime': '2022-02-21T16:39:12.468597', 'endtime': '2022-02-21T16:39:17.372640'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-21T16:39:17.624642', 'endtime': '2022-02-21T16:39:18.004645'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-21T16:39:17.564641', 'endtime': '2022-02-21T16:39:17.836644'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-21T16:39:17.672642', 'endtime': '2022-02-21T16:39:18.028646'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-21T16:39:17.612642', 'endtime': '2022-02-21T16:39:17.836644'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-21T16:39:17.476641', 'endtime': '2022-02-21T16:39:17.856644'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-21T16:39:17.436640', 'endtime': '2022-02-21T16:39:17.692643'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-21T16:39:17.508641', 'endtime': '2022-02-21T16:39:17.844644'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-21T16:39:17.464641', 'endtime': '2022-02-21T16:39:17.688643'}, {'rule': 'samtools_stats', 'starttime': '2022-02-21T16:39:17.580642', 'endtime': '2022-02-21T16:39:17.992645'}, {'rule': 'samtools_stats', 'starttime': '2022-02-21T16:39:17.572642', 'endtime': '2022-02-21T16:39:17.796643'}, {'rule': 'samtools_stats', 'starttime': '2022-02-21T16:39:17.660642', 'endtime': '2022-02-21T16:39:18.032646'}, {'rule': 'samtools_stats', 'starttime': '2022-02-21T16:39:17.604642', 'endtime': '2022-02-21T16:39:17.868644'}, {'rule': 'samtools_stats', 'starttime': '2022-02-21T16:39:17.472641', 'endtime': '2022-02-21T16:39:17.816644'}, {'rule': 'samtools_stats', 'starttime': '2022-02-21T16:39:17.452641', 'endtime': '2022-02-21T16:39:17.688643'}, {'rule': 'samtools_stats', 'starttime': '2022-02-21T16:39:17.500641', 'endtime': '2022-02-21T16:39:17.852644'}, {'rule': 'samtools_stats', 'starttime': '2022-02-21T16:39:17.444640', 'endtime': '2022-02-21T16:39:17.668643'}, {'rule': 'samtools_view', 'starttime': '2022-02-21T16:39:17.552641', 'endtime': '2022-02-21T16:39:17.948645'}, {'rule': 'samtools_view', 'starttime': '2022-02-21T16:39:17.588642', 'endtime': '2022-02-21T16:39:17.848644'}, {'rule': 'samtools_view', 'starttime': '2022-02-21T16:39:17.632642', 'endtime': '2022-02-21T16:39:18.076646'}, {'rule': 'samtools_view', 'starttime': '2022-02-21T16:39:17.648642', 'endtime': '2022-02-21T16:39:17.884644'}, {'rule': 'samtools_view', 'starttime': '2022-02-21T16:39:17.416640', 'endtime': '2022-02-21T16:39:17.852644'}, {'rule': 'samtools_view', 'starttime': '2022-02-21T16:39:17.428640', 'endtime': '2022-02-21T16:39:17.680643'}, {'rule': 'samtools_view', 'starttime': '2022-02-21T16:39:17.484641', 'endtime': '2022-02-21T16:39:17.872644'}, {'rule': 'samtools_view', 'starttime': '2022-02-21T16:39:17.492641', 'endtime': '2022-02-21T16:39:17.740643'}, {'rule': 'sanger2fastq', 'starttime': '2022-02-21T16:39:06.012540', 'endtime': '2022-02-21T16:39:09.268569'}]
+          "values": [{'rule': 'classifier', 'starttime': '2022-02-22T17:30:18.315945', 'endtime': '2022-02-22T17:30:21.083977'}, {'rule': 'extract_cds', 'starttime': '2022-02-22T17:30:14.611903', 'endtime': '2022-02-22T17:30:21.299979'}, {'rule': 'fastp_qc', 'starttime': '2022-02-22T17:30:17.867940', 'endtime': '2022-02-22T17:30:18.275944'}, {'rule': 'fastp_qc', 'starttime': '2022-02-22T17:30:17.859940', 'endtime': '2022-02-22T17:30:18.235944'}, {'rule': 'mappingReporter', 'starttime': '2022-02-22T17:30:26.240036', 'endtime': '2022-02-22T17:30:26.792042'}, {'rule': 'mappingReporter', 'starttime': '2022-02-22T17:30:26.416038', 'endtime': '2022-02-22T17:30:26.996044'}, {'rule': 'mappingReporter', 'starttime': '2022-02-22T17:30:26.128034', 'endtime': '2022-02-22T17:30:26.776042'}, {'rule': 'mappingReporter', 'starttime': '2022-02-22T17:30:26.464038', 'endtime': '2022-02-22T17:30:27.000044'}, {'rule': 'minimap2', 'starttime': '2022-02-22T17:30:21.347980', 'endtime': '2022-02-22T17:30:25.688029'}, {'rule': 'minimap2', 'starttime': '2022-02-22T17:30:21.355980', 'endtime': '2022-02-22T17:30:25.804030'}, {'rule': 'minimap2', 'starttime': '2022-02-22T17:30:21.363980', 'endtime': '2022-02-22T17:30:25.524027'}, {'rule': 'minimap2', 'starttime': '2022-02-22T17:30:21.371980', 'endtime': '2022-02-22T17:30:25.800030'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-22T17:30:25.744030', 'endtime': '2022-02-22T17:30:26.208035'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-22T17:30:25.840031', 'endtime': '2022-02-22T17:30:26.300036'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-22T17:30:25.580028', 'endtime': '2022-02-22T17:30:26.040033'}, {'rule': 'samtools_flagstats', 'starttime': '2022-02-22T17:30:25.860031', 'endtime': '2022-02-22T17:30:26.324036'}, {'rule': 'samtools_stats', 'starttime': '2022-02-22T17:30:25.736030', 'endtime': '2022-02-22T17:30:26.212035'}, {'rule': 'samtools_stats', 'starttime': '2022-02-22T17:30:25.864031', 'endtime': '2022-02-22T17:30:26.344037'}, {'rule': 'samtools_stats', 'starttime': '2022-02-22T17:30:25.584028', 'endtime': '2022-02-22T17:30:26.048033'}, {'rule': 'samtools_stats', 'starttime': '2022-02-22T17:30:25.872031', 'endtime': '2022-02-22T17:30:26.352037'}, {'rule': 'samtools_view', 'starttime': '2022-02-22T17:30:25.728030', 'endtime': '2022-02-22T17:30:26.196035'}, {'rule': 'samtools_view', 'starttime': '2022-02-22T17:30:25.844031', 'endtime': '2022-02-22T17:30:26.376037'}, {'rule': 'samtools_view', 'starttime': '2022-02-22T17:30:25.568028', 'endtime': '2022-02-22T17:30:26.084034'}, {'rule': 'samtools_view', 'starttime': '2022-02-22T17:30:25.880031', 'endtime': '2022-02-22T17:30:26.408037'}, {'rule': 'sanger2fastq', 'starttime': '2022-02-22T17:30:14.675903', 'endtime': '2022-02-22T17:30:17.819939'}]
         },
         "mark": "point",
         "encoding": {
