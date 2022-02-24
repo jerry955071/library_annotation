@@ -16,6 +16,10 @@ __pycache__/
 # custom gitignore
 raw_sanger/*
 raw_fastq/*
-logs/*
-output*
 genomic_data/*
+output_classifier/*
+output_fastp/*
+output_minimap2/*
+output_samtools/*
+# output_mappingReporter/*
+logs/*
