@@ -1,0 +1,3 @@
+# force execute the entire snakemake workflow
+snakemake --use-conda -c all -F all
+
