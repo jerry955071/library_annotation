@@ -38,11 +38,6 @@ fin = args.i
 out_summary = args.out_summary
 out_hist = args.out_hist
 out_unmapped = args.out_unmapped
-# fin = "../output_samtools/filtered/single_human.sam"
-# out_summary = "./summary.tsv"
-# # out_hist = "./hist.txt"
-# out_hist = None
-# out_unmapped = "./unmapped.fq"
 
 
 # get range of CDS from Gencode format GeneID
@@ -61,7 +56,8 @@ summary_dict = {
     "cds_end": [],
     "map_start": [],
     "map_end": [],
-    "identity": [],
+    "pid": [],
+    "pid_adj": [],
     "n_error": [],
     "n_insert": [],
     "n_mismatch": [],
@@ -91,9 +87,10 @@ with open(fin, "r") as handle:
             cds_reg = (1, cds_len)
             map_col = record.calculate("map_col")
             n_err = record.calculate("n_error")
-            # TODO: how to calculate 'between sequence identity'?
-            ident = record.cigar.count("=") / cds_len
-
+            # NOTE: formula of percent identity (PID) and adj. PID 
+            pid = 100 * record.cigar.count("=") / record.cigar.count("=XID")
+            pid_adj = pid * record.cigar.count("=XD") / cds_len
+            
             # catch duplicated record
             if record.qname in summary_dict["qname"]:
                 raise Exception(f"Found duplicated record: {record.qname}")
@@ -105,7 +102,8 @@ with open(fin, "r") as handle:
             summary_dict["cds_end"].append(cds_reg[1])
             summary_dict["map_start"].append(map_col[0])
             summary_dict["map_end"].append(map_col[1])
-            summary_dict["identity"].append("%.3f" % ident)
+            summary_dict["pid"].append("%.1f" % pid)
+            summary_dict["pid_adj"].append("%.1f" % pid_adj)
             summary_dict["n_error"].append(n_err)
             summary_dict["n_insert"].append(record.cigar.count("I"))
             summary_dict["n_mismatch"].append(record.cigar.count("X"))
@@ -118,51 +116,79 @@ df.to_csv(out_summary, sep="\t", index=False)
 
 
 # create histogram
-def hist(x:list, interval:tuple, binwidth:float, outfile:str=None) -> None:
+def hist(
+    x:list, 
+    interval:tuple, 
+    binwidth:float,
+    title:str="",
+    outfile:str=None
+    ) -> None:
+    
     start, end = interval
-
     # initiate `hist_dict`
     hist_dict = {}
     k = start
     while k <= end:
         left = k
         right = k + binwidth
-        key = f"{k:.3f}"
+        key = f"{k:.1f}"
         hist_dict[key] = 0
         k += binwidth
 
     for i in x:
-        bins = f"{float(i) // binwidth * binwidth:.3f}"
+        bins = f"{float(i) // binwidth * binwidth:.1f}"
         hist_dict[bins] += 1
     
     # output
     if outfile == None:
+        print(f"{title}")
         print(f"Histogram:")
         k = start
         while k <= end:
             left = k
             right = k + binwidth
-            key = f"{k:.3f}"
-            print(f"\t{left:.2f}-{right:.2f}: {hist_dict[key]}")
+            right = right if right <= end else left
+            key = f"{k:.1f}"
+            print(f"\t{left:.1f}-{right:.1f}: {hist_dict[key]}")
             k += binwidth
         print("\nParams:")
         print(f"\t-interval: ({start}, {end})")
-        print(f"\t-binwidth: {binwidth}")
+        print(f"\t-binwidth: {binwidth}\n")
     else:
-        open(outfile, "w").close
         with open(outfile, "a") as fout:
+            fout.write(f"{title}\n")
             fout.write(f"Histogram:\n")
             k = start
             while k <= end:
                 left = k
                 right = k + binwidth
-                key = f"{k:.3f}"
-                fout.write(f"\t{left:.2f}-{right:.2f}: {hist_dict[key]}\n")
+                right = right if right <= end else left
+                key = f"{k:.1f}"
+                fout.write(f"\t{left:.1f}-{right:.1f}: {hist_dict[key]}\n")
                 k += binwidth
             fout.write("\nParams:\n")
             fout.write(f"\t-interval: ({start}, {end})\n")
             fout.write(f"\t-binwidth: {binwidth}\n\n")
     return
 
-hist(df["identity"], interval=(0, 1), binwidth=0.05, outfile=out_hist)
+
+# initiate `out_hist`
+open(out_hist, "w").close
+
+# append histogram to file
+hist(
+    df["pid"],
+    interval=(0, 100),
+    binwidth=5.0,
+    outfile=out_hist,
+    title="Histogram of percent identity"
+    )
+
+hist(
+    df["pid_adj"],
+    interval=(0, 100),
+    binwidth=5.0,
+    outfile=out_hist,
+    title="Histogram of adjusted percent identity"
+    )
 
