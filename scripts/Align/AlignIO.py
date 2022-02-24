@@ -1,4 +1,3 @@
-from ast import parse
 from Align.AlignRecord import AlignRecord
 from Align.AlignHeader import AlignHeader
 from Align.Cigar import Cigar
