@@ -5,8 +5,14 @@ import hashlib
 
 
 # try merge 2 SeqRecord objects
-def tryMerge(forward: SeqRecord, reverse: SeqRecord, min_overlap=30) -> None:
-    align_col = ovlp(forward.seq, reverse.seq)
+def tryMerge(
+    forward: SeqRecord, 
+    reverse: SeqRecord, 
+    w: int, 
+    k: int,
+    min_overlap=30
+    ) -> None:
+    align_col = ovlp(forward.seq, reverse.seq, w, k)
     if align_col["seq1"][0] == -1:
         return None
 
@@ -34,7 +40,7 @@ def qscore(record:SeqRecord) -> List[int]:
 
 
 # overlapping sequences
-def ovlp(seq1:str, seq2:str, w:int=13, k:int=8) -> dict:
+def ovlp(seq1:str, seq2:str, w:int, k:int) -> dict:
     """
     Perform fast, approximate overlapping of 
     `seq1` and `seq2` using minimizer methods
@@ -47,7 +53,7 @@ def ovlp(seq1:str, seq2:str, w:int=13, k:int=8) -> dict:
     else:
         return {
             "seq1": (
-                minimizers1[max_chain[0][0]][0], 
+                minimizers1[max_chain[0][0]][0],
                 minimizers1[max_chain[1][0]][0]
                 ),
             "seq2": (

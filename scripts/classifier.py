@@ -103,7 +103,7 @@ for name in all_samples:
 
 
         # try merging two reads
-        merged = mergeSeqRecord.tryMerge(fwd, rev, 30)
+        merged = mergeSeqRecord.tryMerge(fwd, rev, 13, 8, 30)
         
         if merged is None:
             # record read type to `report_dict`
@@ -175,10 +175,10 @@ pd_summary.to_csv(out_summary, sep="\t", index=False)
 # output report.txt
 with open(out_report, "a") as handle:
     handle.write(
-        f"Numbers of single-end (SE) reads: {report_dict['se']}\n" + 
-        f"Numbers of paired-end (PE) reads: {report_dict['pe']}\n" + 
-        f"          ─ overlapping PE reads: {report_dict['pe_ovlp']}\n" + 
-        f"      ─ not-overlapping PE reads: {report_dict['pe_pair']}\n"
+        f"Number of single-end (SE) reads: {report_dict['se']}\n" + 
+        f"Number of paired-end (PE) reads: {report_dict['pe']}\n" + 
+        f"         ─ overlapping PE reads: {report_dict['pe_ovlp']}\n" + 
+        f"     ─ not-overlapping PE reads: {report_dict['pe_pair']}\n"
         )
 
 
