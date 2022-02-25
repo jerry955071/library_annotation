@@ -79,8 +79,8 @@ def getMaxChain(m_ref, m_query, k):
                         mr = m_ref[idx_r + n]
                     except IndexError:
                         break
-                qend = m_query[idx_q + n - 1][0] + k
-                rend = m_ref[idx_r + n - 1][0] + k
+                qend = m_query[idx_q + n - 1][0] + k - 1
+                rend = m_ref[idx_r + n - 1][0] + k - 1
                 w = qend - qstart
                 if w > max_anchor[2]:
                     max_anchor = (rend, qend, w)
