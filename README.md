@@ -2,5 +2,5 @@
 
 Execute the workflow:
 ```
-./run-snakemake
+$ ./run-snakemake
 ```
