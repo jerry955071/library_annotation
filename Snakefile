@@ -121,11 +121,16 @@ rule classifier:
         paired2="output_classifier/paired2.fq",
         report="output_classifier/report.txt",
         summary="output_classifier/summary.tsv"
+    params:
+        w="13",
+        k="8",
+        min_ovlp="30"
     log:
         "logs/classifier.log"
     shell:
         """
         python scripts/classifier.py \
+            -w {params.w} -k {params.k} --min_ovlp {params.min_ovlp} \
             --in1 {input.in1} \
             --in2 {input.in2} \
             --out_merged {output.merged} \
