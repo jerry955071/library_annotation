@@ -21,7 +21,7 @@ output_classifier/*
 output_fastp/*
 output_minimap2/*
 output_samtools/*
-# output_mappingReporter/*
+output_mappingReporter/*
 logs/*
 scripts/debug.*/*
 test*
