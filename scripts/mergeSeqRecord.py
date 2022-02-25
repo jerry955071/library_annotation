@@ -13,23 +13,24 @@ def tryMerge(
     min_overlap=30
     ) -> None:
     align_col = ovlp(forward.seq, reverse.seq, w, k)
-    if align_col["seq1"][0] == -1:
+    if align_col[2] == -1:
         return None
 
-    align_col_len = align_col["seq1"][1] - align_col["seq1"][0]
-    if align_col_len < min_overlap:
+    if align_col[2] < min_overlap:
         return None # early return if length of the ovelapped region < min_overlap
 
     else:
+        ref, qry, col = align_col
+        # TODO:
         return SeqRecord(
-            seq=forward.seq[:align_col["seq1"][0]] + \
-                reverse.seq[align_col["seq2"][0]:],
+            seq=forward.seq[:ref - col] + \
+                reverse.seq[qry - col:],
             id=forward.id,
             name=forward.name,
             description="",
             letter_annotations={
-                "phred_quality": qscore(forward)[:align_col["seq1"][0]] + \
-                    qscore(reverse)[align_col["seq2"][0]:]
+                "phred_quality": qscore(forward)[:ref - col] + \
+                    qscore(reverse)[qry - col:]
                 }
             )
 
@@ -47,82 +48,44 @@ def ovlp(seq1:str, seq2:str, w:int, k:int) -> dict:
     """
     minimizers1 = minimizer.minimizer_sampling(seq1, w, k)
     minimizers2 = minimizer.minimizer_sampling(seq2, w, k)
-    max_chain = getMaxChain(minimizers1, minimizers2)
-    if len(max_chain) == 0:
-        return {"seq1": (-1, -1), "seq2": (-1, -1)}
-    else:
-        return {
-            "seq1": (
-                minimizers1[max_chain[0][0]][0],
-                minimizers1[max_chain[1][0]][0]
-                ),
-            "seq2": (
-                minimizers2[max_chain[0][1]][0],
-                minimizers2[max_chain[1][1]][0]
-                )
-        }
-
-
-# get indice of the longest minimizer chain
-def getMaxChain(
-        m1:List[tuple[int, int]], 
-        m2:List[tuple[int, int]]
-        ) -> List[tuple[int, int]]:
-    """
-    Input:
-        m1, m2: minimizers of seq1 and seq2
-    Output:
-        Indices of the longest minimizer chain.
-        Output `[]` if no minimizer chain is found.
-    """
-    chain = []
-    max_chain = []
-    max_len = 0
-    for anchor in anchorGenerator(m1, m2):
-        if len(chain) == 0:
-            chain.append(anchor)
-            len_chain = 1
-
-        elif len(chain) == 1:
-            chain.append(anchor)
-            if chain[1][0] - chain[0][0] != 1 and chain[1][1] - chain[0][1] != 1:
-                chain.pop(0)
-            len_chain = 2
-
-        else:
-            if chain[1][0] - anchor[0] == -1 and chain[1][1] - anchor[1] == -1:
-                chain[1] = anchor
-                len_chain += 1
-            elif len_chain > max_len:
-                max_chain = chain
-                chain = [anchor]
-
-    if len(max_chain) == 0:
-        if len(chain) == 2:
-            max_chain = chain
-
-    return max_chain
-
+    return getMaxChain(minimizers1, minimizers2, k)
+    
 
 # Generator function yielding indice of the matching minimizers
-def anchorGenerator(m1, m2):
+def getMaxChain(m_ref, m_query, k):
     """
-    Generator function yielding indices of the matching minimizers 
-    between `m1` and `m2`
+    Input:
+        m_ref, m_query: minimizers of seq1 and seq2
+        
+    Output:
+        tuple(x, y, w)
+        x: end of seq1
+        y: end of seq2
+        w: [end - start]
     """
-    a1 = a2 = 0
-    while (a1 <= len(m1) - 1) & (a2 <= len(m2) - 1):
-        while m1[a1][1] != m2[a2][1]:
-            if a2 < len(m2) - 1:
-                a2 += 1
-            elif a2 == len(m2) - 1:
-                a2 = 0
-                if a1 == len(m1) - 1:
-                    return
-                a1 += 1
-        yield a1, a2
-        a1 += 1
-    return
+    max_anchor = (-1, -1, -1)
+    for idx_q in range(len(m_query)):
+        mq = m_query[idx_q]
+        for idx_r in range(len(m_ref)):
+            mr = m_ref[idx_r]
+            if mq[1] == mr[1]:
+                qstart = mq[0]
+                rstart = mr[0]
+                n = 0
+                while mq[1] == mr[1]:
+                    n += 1
+                    try:
+                        mq = m_query[idx_q + n]
+                        mr = m_ref[idx_r + n]
+                    except IndexError:
+                        break
+                qend = m_query[idx_q + n - 1][0] + k
+                rend = m_ref[idx_r + n - 1][0] + k
+                w = qend - qstart
+                if w > max_anchor[2]:
+                    max_anchor = (rend, qend, w)
+
+    return max_anchor
 
 
 class minimizer:
@@ -196,13 +159,13 @@ class minimizer:
             % 10**n
 
 
-# # for test
-# from Bio import SeqIO
-# in1 = "../output_fastp/forward_passed.fq"
-# in2 = "../output_fastp/reverse_passed.fq"
-# record_dict1 = SeqIO.index(in1, "fastq")
-# record_dict2 = SeqIO.index(in2, "fastq")
-# fwd = record_dict1["01_B05"]
-# rev = record_dict2["01_B05"].reverse_complement()
-# tryMerge(fwd, rev)
+# for test
+from Bio import SeqIO
+in1 = "./output_fastp/forward_passed.fq"
+in2 = "./output_fastp/reverse_passed.fq"
+record_dict1 = SeqIO.index(in1, "fastq")
+record_dict2 = SeqIO.index(in2, "fastq")
+fwd = record_dict1["01_A07"]
+rev = record_dict2["01_A07"].reverse_complement()
+tryMerge(fwd, rev, 13, 8)
 
