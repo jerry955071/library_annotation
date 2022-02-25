@@ -6,6 +6,24 @@ import pandas as pd
 
 # create ArgumentParser
 parser = argparse.ArgumentParser(description='Parameters for this script') 
+parser.add_argument(
+    "-w",
+    help="window size for detecting overlap",
+    default=13,
+    type=int
+)
+parser.add_argument(
+    "-k",
+    help="kmer size for detecting overlap",
+    default=8,
+    type=int
+)
+parser.add_argument(
+    "--min_ovlp",
+    help="minimal required overlap length",
+    default=30,
+    type=int
+)
 parser.add_argument("--out_merged", help="merged fastq filename", type=str)
 parser.add_argument("--out_single", help="single-end fastq filename", type=str)
 parser.add_argument("--out_paired1", help="paired-end read1 filename", type=str)
@@ -18,6 +36,9 @@ parser.add_argument("--report", help="output report file name", type=str)
 
 # get arguments from argparse 
 args = parser.parse_args()
+w =args.w
+k = args.k
+min_ovlp = args.min_ovlp
 out_merged = args.out_merged
 out_single = args.out_single
 out_paired1 = args.out_paired1
@@ -103,7 +124,7 @@ for name in all_samples:
 
 
         # try merging two reads
-        merged = mergeSeqRecord.tryMerge(fwd, rev, 13, 8, 30)
+        merged = mergeSeqRecord.tryMerge(fwd, rev, w, k, min_ovlp)
         
         if merged is None:
             # record read type to `report_dict`
