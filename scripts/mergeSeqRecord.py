@@ -20,17 +20,46 @@ def tryMerge(
         return None # early return if length of the ovelapped region < min_overlap
 
     else:
-        ref, qry, col = align_col
-        # TODO:
+        fend, rend, window = align_col
+        # TODO: base correction
+        # perform base correction
+        base_ovlp = ""
+        qscore_ovlp = []
+        for offset in range(window):
+            fbase = forward.seq[fend - offset]
+            rbase = reverse.seq[rend - offset]
+            if fbase == rbase:
+                base_ovlp = fbase + base_ovlp
+                qscore_ovlp.insert(
+                    0, max(
+                        qscore(forward)[fend - offset],
+                        qscore(reverse)[rend - offset]
+                        )
+                )
+            else:
+                D = {
+                    qscore(forward)[fend - offset]: fbase,
+                    qscore(reverse)[rend - offset]: rbase
+                }
+                qmax = max(
+                    qscore(forward)[fend - offset], 
+                    qscore(reverse)[rend - offset]
+                    )
+                qscore_ovlp.insert(0, qmax)
+                base_ovlp = D[qmax] + base_ovlp
+
         return SeqRecord(
-            seq=forward.seq[:ref - col] + \
-                reverse.seq[qry - col:],
+            seq=forward.seq[:fend - window] + \
+                base_ovlp + \
+                reverse.seq[rend:],
             id=forward.id,
             name=forward.name,
             description="",
             letter_annotations={
-                "phred_quality": qscore(forward)[:ref - col] + \
-                    qscore(reverse)[qry - col:]
+                "phred_quality": \
+                    qscore(forward)[:fend - window] + \
+                    qscore_ovlp + \
+                    qscore(reverse)[rend:]
                 }
             )
 
@@ -79,12 +108,11 @@ def getMaxChain(m_ref, m_query, k):
                         mr = m_ref[idx_r + n]
                     except IndexError:
                         break
-                qend = m_query[idx_q + n - 1][0] + k - 1
-                rend = m_ref[idx_r + n - 1][0] + k - 1
+                qend = m_query[idx_q + n - 1][0] + k
+                rend = m_ref[idx_r + n - 1][0] + k
                 w = qend - qstart
                 if w > max_anchor[2]:
                     max_anchor = (rend, qend, w)
-
     return max_anchor
 
 
@@ -161,8 +189,8 @@ class minimizer:
 
 # for test
 from Bio import SeqIO
-in1 = "./output_fastp/forward_passed.fq"
-in2 = "./output_fastp/reverse_passed.fq"
+in1 = "../output_fastp/forward_passed.fq"
+in2 = "../output_fastp/reverse_passed.fq"
 record_dict1 = SeqIO.index(in1, "fastq")
 record_dict2 = SeqIO.index(in2, "fastq")
 fwd = record_dict1["01_A07"]
