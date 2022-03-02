@@ -1,6 +1,6 @@
 # library_annotation
 
-Execute the workflow:
+To execute the workflow:
 ```
 $ ./run-snakemake
 ```
