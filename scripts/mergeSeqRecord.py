@@ -21,7 +21,6 @@ def tryMerge(
 
     else:
         fend, rend, window = align_col
-        # TODO: base correction
         # perform base correction
         base_ovlp = ""
         qscore_ovlp = []
