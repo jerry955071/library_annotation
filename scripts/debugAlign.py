@@ -1,6 +1,8 @@
 from Align.AlignIO import AlignIO
+import sys
 
-file = AlignIO("../output_samtools/filtered/merged.sam").AlignGenerator()
+fin = sys.argv[1]
+file = AlignIO(fin).AlignGenerator()
 for line in file:
     if line.rname == "*":
         pass
