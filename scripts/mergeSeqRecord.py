@@ -12,7 +12,7 @@ def tryMerge(
     k: int,
     min_overlap=30
     ) -> None:
-    align_col = ovlp(forward.seq, reverse.seq, w, k)
+    align_col = ovlp(ref=forward.seq, qry=reverse.seq, w=w, k=k)
     if align_col[2] == -1:
         return None
 
@@ -25,24 +25,26 @@ def tryMerge(
         base_ovlp = ""
         qscore_ovlp = []
         for offset in range(window):
-            fbase = forward.seq[fend - offset]
-            rbase = reverse.seq[rend - offset]
+            fidx = fend - offset - 1
+            ridx = rend - offset - 1
+            fbase = forward.seq[fidx]
+            rbase = reverse.seq[ridx]
             if fbase == rbase:
                 base_ovlp = fbase + base_ovlp
                 qscore_ovlp.insert(
                     0, max(
-                        qscore(forward)[fend - offset],
-                        qscore(reverse)[rend - offset]
+                        qscore(forward)[fidx],
+                        qscore(reverse)[ridx]
                         )
                 )
             else:
                 D = {
-                    qscore(forward)[fend - offset]: fbase,
-                    qscore(reverse)[rend - offset]: rbase
+                    qscore(forward)[fidx]: fbase,
+                    qscore(reverse)[ridx]: rbase
                 }
                 qmax = max(
-                    qscore(forward)[fend - offset], 
-                    qscore(reverse)[rend - offset]
+                    qscore(forward)[fidx], 
+                    qscore(reverse)[ridx]
                     )
                 qscore_ovlp.insert(0, qmax)
                 base_ovlp = D[qmax] + base_ovlp
@@ -69,21 +71,21 @@ def qscore(record:SeqRecord) -> List[int]:
 
 
 # overlapping sequences
-def ovlp(seq1:str, seq2:str, w:int, k:int) -> dict:
+def ovlp(ref:str, qry:str, w:int, k:int) -> dict:
     """
     Perform fast, approximate overlapping of 
     `seq1` and `seq2` using minimizer methods
     """
-    minimizers1 = minimizer.minimizer_sampling(seq1, w, k)
-    minimizers2 = minimizer.minimizer_sampling(seq2, w, k)
-    return getMaxChain(minimizers1, minimizers2, k)
+    m_ref = minimizer.minimizer_sampling(ref, w, k)
+    m_qry = minimizer.minimizer_sampling(qry, w, k)
+    return getMaxChain(m_ref, m_qry, k)
     
 
 # Generator function yielding indice of the matching minimizers
-def getMaxChain(m_ref, m_query, k):
+def getMaxChain(m_ref, m_qry, k):
     """
     Input:
-        m_ref, m_query: minimizers of seq1 and seq2
+        m_ref, m_qry: minimizers of seq1 and seq2
         
     Output:
         tuple(x, y, w)
@@ -92,8 +94,8 @@ def getMaxChain(m_ref, m_query, k):
         w: [end - start]
     """
     max_anchor = (-1, -1, -1)
-    for idx_q in range(len(m_query)):
-        mq = m_query[idx_q]
+    for idx_q in range(len(m_qry)):
+        mq = m_qry[idx_q]
         for idx_r in range(len(m_ref)):
             mr = m_ref[idx_r]
             if mq[1] == mr[1]:
@@ -103,11 +105,11 @@ def getMaxChain(m_ref, m_query, k):
                 while mq[1] == mr[1]:
                     n += 1
                     try:
-                        mq = m_query[idx_q + n]
+                        mq = m_qry[idx_q + n]
                         mr = m_ref[idx_r + n]
                     except IndexError:
                         break
-                qend = m_query[idx_q + n - 1][0] + k
+                qend = m_qry[idx_q + n - 1][0] + k
                 rend = m_ref[idx_r + n - 1][0] + k
                 w = qend - qstart
                 if w > max_anchor[2]:
@@ -186,13 +188,13 @@ class minimizer:
             % 10**n
 
 
-# for test
-from Bio import SeqIO
-in1 = "../output_fastp/forward_passed.fq"
-in2 = "../output_fastp/reverse_passed.fq"
-record_dict1 = SeqIO.index(in1, "fastq")
-record_dict2 = SeqIO.index(in2, "fastq")
-fwd = record_dict1["01_A07"]
-rev = record_dict2["01_A07"].reverse_complement()
-tryMerge(fwd, rev, 13, 8)
+# # for test
+# from Bio import SeqIO
+# in1 = "../output_fastp/forward_passed.fq"
+# in2 = "../output_fastp/reverse_passed.fq"
+# record_dict1 = SeqIO.index(in1, "fastq")
+# record_dict2 = SeqIO.index(in2, "fastq")
+# fwd = record_dict1["01_A07"]
+# rev = record_dict2["01_A07"].reverse_complement()
+# tryMerge(fwd, rev, 13, 8)
 
