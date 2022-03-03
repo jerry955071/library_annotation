@@ -45,6 +45,12 @@ class Cigar(object):
     def __str__(self) -> str:
         return self.cigar_raw
 
+
+    def __iter__(self):
+        for i in range(len(self.cigar_int)):
+            yield (self.cigar_str[i], self.cigar_int[i])
+        return
+
     @staticmethod
     def fromstring(raw_cigar:str) -> object:
         p_str = re.compile("[M|I|D|N|S|H|P|=|X]")
@@ -54,7 +60,16 @@ class Cigar(object):
 
         return Cigar(raw_cigar, m_str, m_int)
 
-    
+
+    # get the start/end locations of the cigar provided by `pattern`
+    def positions(self, pattern: str) -> List[tuple]:
+        pos = []
+        for i, idx in zip(self.cigar_str, range(len(self.cigar_str))):
+            if i in pattern:
+                pos.append(self.nth_cigar(idx))
+        return pos
+
+
     # get the start/end location of the nth cigar string
     def nth_cigar(self, n:int) -> tuple([int, int]):
         # covert -1 to len(self.cigar_int)
@@ -68,15 +83,6 @@ class Cigar(object):
             start = self.nth_cigar(n - 1)[-1]
             end = start + self.cigar_int[n]
             return (start, end)
-    
-
-    # get the start/end locations of the cigar provided by `pattern`
-    def where(self, pattern: str) -> List[tuple]:
-        pos = []
-        for i, idx in zip(self.cigar_str, range(len(self.cigar_str))):
-            if i in pattern:
-                pos.append(self.nth_cigar(idx))
-        return pos
 
     
     # get index of the cigar provided by `pattern`
@@ -88,7 +94,7 @@ class Cigar(object):
         return index
     
 
-    # get index of the cigar provided by `pattern`
+    # get number of the cigar provided by `pattern`
     def count(self, pattern:str) -> int:
         counts = 0
         for s, i in zip(self.cigar_str, self.cigar_int):
