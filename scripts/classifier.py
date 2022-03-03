@@ -100,8 +100,6 @@ report_dict = {
 
 # for each sample do:
 for name in all_samples:
-    if name == "01_B05":
-        pass
     # check if forward/reverse sequencing results exists
     fwd_exist = name in set(record_dict1._offsets.keys())
     rev_exist = name in set(record_dict2._offsets.keys())
