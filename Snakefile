@@ -164,6 +164,38 @@ rule minimap2:
         """
 
 
+# generate stats
+rule samtools_stats:
+    input:
+        "output_minimap2/{fname}.sam"
+    output:
+        "output_samtools/stats/{fname}.stats"
+    log:
+        "logs/samtools_stats_{fname}.log"
+    shell:
+        """
+        samtools stats \
+            {input} > {output} \
+            2> {log}
+        """
+
+
+# generate flag stats
+rule samtools_flagstats:
+    input:
+        "output_minimap2/{fname}.sam"
+    output:
+        "output_samtools/flagstats/{fname}.flagstat"
+    log:
+        "logs/samtools_flagstats_{fname}.log"
+    shell:
+        """
+        samtools flagstat \
+            {input} > {output} \
+            2> {log}
+        """
+
+
 # remove secondary/supplementary records
 rule samtools_view:
     input:
@@ -284,34 +316,3 @@ rule template:
 #             2> {log.mouse} 1> {log.mouse}
 #         """
 
-
-# # generate stats
-# rule samtools_stats:
-#     input:
-#         "output_minimap2/{fname}.sam"
-#     output:
-#         "output_samtools/stats/{fname}.stats"
-#     log:
-#         "logs/samtools_stats_{fname}.log"
-#     shell:
-#         """
-#         samtools stats \
-#             {input} > {output} \
-#             2> {log}
-#         """
-
-
-# # generate flag stats
-# rule samtools_flagstats:
-#     input:
-#         "output_minimap2/{fname}.sam"
-#     output:
-#         "output_samtools/flagstats/{fname}.flagstats"
-#     log:
-#         "logs/samtools_flagstats_{fname}.log"
-#     shell:
-#         """
-#         samtools flagstats \
-#             {input} > {output} \
-#             2> {log}
-#         """
