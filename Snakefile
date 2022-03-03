@@ -5,12 +5,12 @@ configfile: "config.json"
 # all
 rule all:
     input:
-        # expand("output_samtools/stats/{fname}.stats", 
-        #     fname=["merged", "single", "paired1", "paired2"],
-        # ),
-        # expand("output_samtools/flagstats/{fname}.flagstats", 
-        #     fname=["merged", "single", "paired1", "paired2"]
-        # ),
+        expand("output_samtools/stats/{fname}.stats", 
+            fname=["merged", "single", "paired1", "paired2"],
+        ),
+        expand("output_samtools/flagstats/{fname}.flagstats", 
+            fname=["merged", "single", "paired1", "paired2"]
+        ),
         expand("output_mappingReporter/{fname}_summary.tsv", 
             fname=["merged", "single", "paired1", "paired2"]
         )
