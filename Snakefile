@@ -8,7 +8,7 @@ rule all:
         expand("output_samtools/stats/{fname}.stats", 
             fname=["merged", "single", "paired1", "paired2"],
         ),
-        expand("output_samtools/flagstats/{fname}.flagstats", 
+        expand("output_samtools/flagstats/{fname}.flagstat", 
             fname=["merged", "single", "paired1", "paired2"]
         ),
         expand("output_mappingReporter/{fname}_summary.tsv", 
