@@ -14,6 +14,20 @@ rule all:
         expand("output_mappingReporter/{fname}_summary.tsv", 
             fname=["merged", "single", "paired1", "paired2"]
         )
+    params:
+        logs_dir="./logs"
+    shell:
+        """
+        # remove empty logs
+        DIR={params.logs_dir}
+
+        for file in $(ls $DIR); 
+        do
+            if [[ ! -s $DIR/$file ]]; then
+                rm $DIR/$file
+            fi
+        done
+        """
 
 
 # extract CDS from Gencode reference
@@ -155,7 +169,11 @@ rule minimap2:
         "logs/minimap2_{fname}.log"
     shell:
         """
-        minimap2 -ax asm5 --eqx \
+        minimap2 -ax asm5 \
+            -E4,3 \
+            -G10\
+            --eqx \
+            --no-end-flt \
             -t {threads} \
             -o {output} \
             {input.ref} \
