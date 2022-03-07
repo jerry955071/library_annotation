@@ -170,10 +170,9 @@ rule minimap2:
     shell:
         """
         minimap2 -ax asm5 \
-            -E4,3 \
-            -G10\
+            -E4,3 `# gap extension penalty` \
             --eqx \
-            --no-end-flt \
+            --no-end-flt `# dont filter end seed before base-level alignment` \
             -t {threads} \
             -o {output} \
             {input.ref} \
