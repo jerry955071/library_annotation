@@ -1,4 +1,4 @@
-from Align.AlignIO import AlignIO
+from .Align.AlignIO import AlignIO
 import argparse
 import re
 import pandas as pd
