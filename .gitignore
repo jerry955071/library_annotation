@@ -24,5 +24,4 @@ output_samtools/*
 output_mappingReporter/*
 logs/*
 scripts/debug.*/*
-test*
 report.html
