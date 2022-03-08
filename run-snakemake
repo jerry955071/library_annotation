@@ -1,3 +1,8 @@
-# force execute the entire snakemake workflow
-snakemake --use-conda -c all -F all
+#!/bin/bash
+# conda execute the entire snakemake workflow
+conda run \
+    -n snakemake \
+    --no-capture-output \
+    --live-stream \
+    snakemake --use-conda -c all -F all
 
