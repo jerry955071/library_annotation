@@ -76,7 +76,7 @@ with open(fin, "r") as handle:
         if record.rname == "*":
             # output unmapped records to file
             with open(out_unmapped, "a") as fout:
-                fout.write(f"{record.qname}\n")
+                fout.write(f"@{record.qname}\n")
                 fout.write(f"{record.seq}\n")
                 fout.write("+\n")
                 fout.write(f"{record.qual}\n")
