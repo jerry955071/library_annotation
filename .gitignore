@@ -13,7 +13,11 @@ __pycache__/
 .snakemake/*
 
 
-# custom gitignore
+# for bash nohup
+nohup*
+
+
+# workplace specific
 raw_sanger/*
 raw_fastq/*
 genomic_data/*
@@ -22,6 +26,7 @@ output_fastp/*
 output_minimap2/*
 output_samtools/*
 output_mappingReporter/*
+output_blastUnmapped/*
 logs/*
 scripts/debug.*/*
 report.html
