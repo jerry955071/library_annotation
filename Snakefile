@@ -13,7 +13,8 @@ rule all:
         ),
         expand("output_mappingReporter/{fname}_summary.tsv", 
             fname=["merged", "single", "paired1", "paired2"]
-        )
+        ),
+        "output_blastUnmapped/blast.out"
     params:
         logs_dir="./logs"
     shell:
@@ -253,6 +254,51 @@ rule mappingReporter:
             --out_hist {output.out_hist} \
             --out_unmapped {output.out_unmapped} \
             2> {log} 1> {log}
+        """
+
+
+# collect, blast all unmapped reads
+rule blastUnmapped:
+    conda:
+        "envs/project_gilead_chen.yml"
+    input:
+        expand(
+            "output_mappingReporter/{fname}_unmapped.fq",
+            fname=["merged", "paired1", "paired2", "single"]
+            )
+    output:
+        fa="output_blastUnmapped/unmapped.fa",
+        blst="output_blastUnmapped/blast.out"
+    params:
+        max_target_seqs=5,
+        db="nt",
+        outfmt=0
+        out_dir="output_blastUnmapped/"
+    log:
+        py="logs/collectUnmapped.log",
+        blst="logs/blastUnmapped.log"
+    shell:
+        """
+        # collect unmapped reads
+        python scripts/collectUnmapped.py \
+            -i {input} \
+            --out_fa {output.fa} \
+            2> {log.py} 1> {log.py}
+
+        # blast unmapped reads
+        blastn \
+            -query {output.fa} \
+            -db {params.db} \
+            -remote \
+            -max_target_seqs {params.max_target_seqs} \
+            -outfmt {params.outfmt} \
+            -out {output.blst} \
+            2> {log.blst} 1> {log.blst}
+
+        # format blast results
+        python scripts/splitBlast.py \
+            -i {output.fa} \
+            --out_dir {params.out_dir}
         """
 
 
