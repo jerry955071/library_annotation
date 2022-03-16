@@ -1,5 +1,11 @@
+from typing import List
 # modify config file before run
-configfile: "config.json"
+configfile: "configs/config.json"
+
+
+# join list of strings with 'space'
+def space_join(x:List[str]) -> str:
+    return " ".join(x)
 
 
 # all
@@ -69,7 +75,7 @@ rule sanger2fastq:
     conda:
         "envs/project_gilead_chen.yml"
     input:
-        config["input_folder"]
+        config["master"]["raw_sangers"]
     output:
         out1="raw_fastq/forward.fq",
         out2="raw_fastq/reverse.fq"
@@ -96,28 +102,22 @@ rule fastp_qc:
         "raw_fastq/{fname}.fq"
     output:
         out="output_fastp/{fname}_passed.fq",
-        failed="output_fastp/{fname}_failed.fq"
+        failed="output_fastp/{fname}_failed.fq",
+        report_json="output_fastp/{fname}_report.json",
+        report_html="output_fastp/{fname}_report.html"
     params:
-        length_required=50,
-	    mean_q=20,
-        cut_window_size=10,
-        out_dir="output_fastp"
+        space_join(config["fastp_qc"]["params"])
     log:
         "logs/fastp_{fname}.log"
     shell:
         """
         fastp \
-            --phred64 \
+            {params} \
             --in1 {input} \
             --out1 {output.out} \
             --failed_out {output.failed} \
-            --cut_mean_quality {params.mean_q} \
-            --cut_front \
-            --cut_tail  \
-            --cut_window_size {params.cut_window_size} \
-	        --length_required {params.length_required} \
-            --json '{params.out_dir}/{wildcards.fname}_report.json' \
-            --html '{params.out_dir}/{wildcards.fname}_report.html' \
+            --json '{output.report_json}' \
+            --html '{output.report_html}' \
             2> {log} 1> {log}
         """
 
@@ -137,15 +137,13 @@ rule classifier:
         report="output_classifier/report.txt",
         summary="output_classifier/summary.tsv"
     params:
-        w="13",
-        k="8",
-        min_ovlp="30"
+        space_join(config["classifier"]["params"])
     log:
         "logs/classifier.log"
     shell:
         """
         python scripts/classifier.py \
-            -w {params.w} -k {params.k} --min_ovlp {params.min_ovlp} \
+            {params} \
             --in1 {input.in1} \
             --in2 {input.in2} \
             --out_merged {output.merged} \
@@ -166,15 +164,14 @@ rule minimap2:
         ref="genomic_data/gencode.HM.cds.fa"
     output:
         "output_minimap2/{fname}.sam"
+    params:
+        space_join(config["minimap2"]["params"])
     log:
         "logs/minimap2_{fname}.log"
     shell:
         """
-        minimap2 -ax asm5 \
-            -E4,3 `# gap extension penalty` \
-            --eqx \
-            --no-end-flt `# dont filter end seed before base-level alignment` \
-            -t {threads} \
+        minimap2 \
+            {params} \
             -o {output} \
             {input.ref} \
             {input.query} \
@@ -220,14 +217,14 @@ rule samtools_view:
         "output_minimap2/{fname}.sam"
     output:
         "output_samtools/filtered/{fname}.sam"
+    params:
+        space_join(config["samtools_view"]["params"])
     log:
         "logs/samtools_view_{fname}.log"
     shell:
         """
         samtools view \
-            -F 256 `# remove secondary alignments` \
-            -F 2048 `# remove supplementary alignments` \
-            -h \
+            {params} \
             -o {output} \
             {input} \
             2> {log} 1> {log}
@@ -270,9 +267,9 @@ rule blastUnmapped:
         fa="output_blastUnmapped/unmapped.fa",
         blst="output_blastUnmapped/blast.out"
     params:
-        max_target_seqs=5,
-        db="nt",
-        outfmt=0
+        blastn=space_join(
+            config["blastUnmapped"]["params"]["blastn"]
+            ),
         out_dir="output_blastUnmapped/"
     log:
         py="logs/collectUnmapped.log",
@@ -287,18 +284,16 @@ rule blastUnmapped:
 
         # blast unmapped reads
         blastn \
+            {params.blastn} \
             -query {output.fa} \
-            -db {params.db} \
-            -remote \
-            -max_target_seqs {params.max_target_seqs} \
-            -outfmt {params.outfmt} \
             -out {output.blst} \
             2> {log.blst} 1> {log.blst}
 
-        # format blast results
+        # split blast results
         python scripts/splitBlast.py \
             -i {output.fa} \
-            --out_dir {params.out_dir}
+            --out_dir {params.out_dir} \
+            2> {log.py} 1> {log.py}
         """
 
 
@@ -311,6 +306,7 @@ rule template:
     shell:
         """
         echo Hello world!
+        echo {rule}
         """
 
 
