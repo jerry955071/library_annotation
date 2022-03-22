@@ -232,16 +232,17 @@ class minimizer:
 
 
 # for test
-from Bio import SeqIO
-in1 = "../output_fastp/forward_passed.fq"
-in2 = "../output_fastp/reverse_passed.fq"
-record_dict1 = SeqIO.index(in1, "fastq")
-record_dict2 = SeqIO.index(in2, "fastq")
-for i in list(record_dict1.keys()):
-    try:
-        fwd = record_dict1[i]
-        rev = record_dict2[i].reverse_complement()
-        tryMerge(fwd, rev, 13, 8)
-    except KeyError:
-        pass
+if __name__ == '__main__':
+    from Bio import SeqIO
+    in1 = "../output_fastp/forward_passed.fq"
+    in2 = "../output_fastp/reverse_passed.fq"
+    record_dict1 = SeqIO.index(in1, "fastq")
+    record_dict2 = SeqIO.index(in2, "fastq")
+    for i in list(record_dict1.keys()):
+        try:
+            fwd = record_dict1[i]
+            rev = record_dict2[i].reverse_complement()
+            tryMerge(fwd, rev, 13, 8)
+        except KeyError:
+            pass
 
