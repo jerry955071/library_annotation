@@ -10,6 +10,22 @@ Cigar(
     cigar_str=['I', '=', 'I', '=', 'I', '=', 'I', '=', 'I', '=', 'I', '='], 
     cigar_int=[4, 1, 12, 3, 3, 1, 2, 1, 1, 1, 1, 347]
     )
+>>>
+>>> for i in parsed_cigar:
+...     print(i)
+... 
+('I', (0, 4))
+('=', (4, 5))
+('I', (5, 17))
+('=', (17, 20))
+('I', (20, 23))
+('=', (23, 24))
+('I', (24, 26))
+('=', (26, 27))
+('I', (27, 28))
+('=', (28, 29))
+('I', (29, 30))
+('=', (30, 377))
 >>> 
 >>> sum(parsed_cigar.cigar_int)
 377
@@ -47,8 +63,8 @@ class Cigar(object):
 
 
     def __iter__(self):
-        for i in range(len(self.cigar_int)):
-            yield (self.cigar_str[i], self.cigar_int[i])
+        for s, p in zip(self.cigar_str, self.positions("=XDISHP")):
+            yield (s, p)
         return
 
     @staticmethod
@@ -102,14 +118,23 @@ class Cigar(object):
                 counts += i
         return counts
 
+    
+    def expand(self) -> str:
+        out = ""
+        for s, i in zip(self.cigar_str, self.cigar_int):
+            out += s * i
+        return out
 
-# # Test
-# raw_cigar = '4I1=12I3=3I1=2I1=1I1=1I347='
-# parsed_cigar = Cigar.from_raw(raw_cigar)
-# parsed_cigar
 
-# sum(parsed_cigar.cigar_int)
-# parsed_cigar.nth_cigar(-1)
-# parsed_cigar.where("I=")
-
+# Test
+if __name__ == "__main__":
+    raw_cigar = '4I1=12I3=3I1=2I1=1I1=1I347='
+    parsed_cigar = Cigar.fromstring(raw_cigar)
+    print(parsed_cigar)
+    
+    for i in parsed_cigar:
+        print(i)    
+    sum(parsed_cigar.cigar_int)
+    parsed_cigar.nth_cigar(-1)
+    parsed_cigar.positions("I=")
 
