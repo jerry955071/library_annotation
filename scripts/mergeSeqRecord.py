@@ -1,8 +1,14 @@
 from Bio.SeqRecord import SeqRecord
+from Align.Cigar import Cigar
 from typing import List
-from collections import deque
+from collections import deque, namedtuple
 import hashlib
+import edlib
 
+
+# NamedTuple recording between-sequence information
+Anchor = namedtuple("Anchor", "rstart, rend, qstart, qend")
+Chain = namedtuple("Chain", "rstart, rend, qstart, qend")
 
 # try merge 2 SeqRecord objects
 def tryMerge(
@@ -12,57 +18,71 @@ def tryMerge(
     k: int,
     min_overlap=30
     ) -> None:
-    align_col = ovlp(ref=forward.seq, qry=reverse.seq, w=w, k=k)
-    if align_col[2] == -1:
+    
+    # get maximized minimizer chain
+    max_chain = getMaxChain(ref=forward.seq, qry=reverse.seq, w=w, k=k)
+    
+    # return `None` if no chain found
+    if any([i == -1 for i in max_chain]):
         return None
 
-    if align_col[2] < min_overlap:
-        return None # early return if length of the ovelapped region < min_overlap
+    # return `None` if ovelapped length < min_overlap
+    if max_chain.rend - max_chain.rstart < min_overlap:
+        return None
 
     else:
-        fend, rend, window = align_col
-        # perform base correction
-        base_ovlp = ""
-        qscore_ovlp = []
-        for offset in range(window):
-            fidx = fend - offset - 1
-            ridx = rend - offset - 1
-            fbase = forward.seq[fidx]
-            rbase = reverse.seq[ridx]
-            if fbase == rbase:
-                base_ovlp = fbase + base_ovlp
-                qscore_ovlp.insert(
-                    0, max(
-                        qscore(forward)[fidx],
-                        qscore(reverse)[ridx]
-                        )
-                )
+        # perform global pairwise alignment at chained region
+        sub_qry = reverse[max_chain.qstart:max_chain.qend]
+        sub_ref = forward[max_chain.rstart:max_chain.rend]
+        edlib_align = edlib.align(
+            query=str(sub_qry.seq),
+            target=str(sub_ref.seq),
+            mode="NW",
+            task="path"
+        )
+
+        # for each column in the alignment
+        generator_qq = (i for i in qscore(sub_qry))
+        generator_qr = (i for i in qscore(sub_ref))
+        generator_bq = (i for i in sub_qry)
+        generator_br = (i for i in sub_ref)
+        combined_bases = ""
+        combined_quals = []
+        last_qq = deque(maxlen=5) # record up 5 previous q-score
+        last_qr = deque(maxlen=5) # record up 5 previous q-score
+        for cig in Cigar.fromstring(edlib_align["cigar"]).expand():
+            bq = next(generator_bq) if cig != "D" else "-"
+            qq = next(generator_qq) if cig != "D" else round(sum(last_qq)/len(last_qq))
+            br = next(generator_br) if cig != "I" else "-"
+            qr = next(generator_qr) if cig != "I" else round(sum(last_qr)/len(last_qr))
+            last_qq.append(qq)
+            last_qr.append(qr)
+            
+            # pick the higher-q base 
+            base = br if qr > qq else bq
+            # pick the higher q
+            qual = max(qr, qq)
+            # skip "-" characters
+            if base == "-":
+                continue
             else:
-                D = {
-                    qscore(forward)[fidx]: fbase,
-                    qscore(reverse)[ridx]: rbase
-                }
-                qmax = max(
-                    qscore(forward)[fidx], 
-                    qscore(reverse)[ridx]
-                    )
-                qscore_ovlp.insert(0, qmax)
-                base_ovlp = D[qmax] + base_ovlp
+                combined_bases += base
+                combined_quals.append(qual)
 
         return SeqRecord(
-            seq=forward.seq[:fend - window] + \
-                base_ovlp + \
-                reverse.seq[rend:],
+            seq=forward.seq[:max_chain.rstart] + \
+                combined_bases + \
+                reverse.seq[max_chain.qend:],
             id=forward.id,
             name=forward.name,
             description="",
             letter_annotations={
                 "phred_quality": \
-                    qscore(forward)[:fend - window] + \
-                    qscore_ovlp + \
-                    qscore(reverse)[rend:]
+                    qscore(forward)[:max_chain.rstart] + \
+                    combined_quals + \
+                    qscore(reverse)[max_chain.qend:]
                 }
-            )
+        )
 
 
 # get qscore from SeqRecord object
@@ -70,38 +90,28 @@ def qscore(record:SeqRecord) -> List[int]:
     return record.letter_annotations["phred_quality"]
 
 
-# overlapping sequences
-def ovlp(ref:str, qry:str, w:int, k:int) -> dict:
-    """
-    Perform fast, approximate overlapping of 
-    `seq1` and `seq2` using minimizer methods
-    """
-    m_ref = minimizer.minimizer_sampling(ref, w, k)
-    m_qry = minimizer.minimizer_sampling(qry, w, k)
-    return getMaxChain(m_ref, m_qry, k)
-    
-
-# Generator function yielding indice of the matching minimizers
-def getMaxChain(m_ref, m_qry, k):
+def getMaxChain(ref:str, qry:str, w:int, k:int) -> tuple:
     """
     Input:
         m_ref, m_qry: minimizers of seq1 and seq2
         
     Output:
-        tuple(x, y, w)
-        x: end of seq1
-        y: end of seq2
-        w: [end - start]
+        Chain(rstart, rend, qstart, qend)
     """
-    max_anchor = (-1, -1, -1)
+    m_ref = minimizer.minimizer_sampling(ref, w, k)
+    m_qry = minimizer.minimizer_sampling(qry, w, k)
+    max_chain = Chain(-1, -1, -1, -1)
+
     for idx_q in range(len(m_qry)):
         mq = m_qry[idx_q]
         for idx_r in range(len(m_ref)):
             mr = m_ref[idx_r]
+            # found seed
             if mq[1] == mr[1]:
                 qstart = mq[0]
                 rstart = mr[0]
                 n = 0
+                # extend
                 while mq[1] == mr[1]:
                     n += 1
                     try:
@@ -111,10 +121,43 @@ def getMaxChain(m_ref, m_qry, k):
                         break
                 qend = m_qry[idx_q + n - 1][0] + k
                 rend = m_ref[idx_r + n - 1][0] + k
-                w = qend - qstart
-                if w > max_anchor[2]:
-                    max_anchor = (rend, qend, w)
-    return max_anchor
+                
+                # evaluate new chain length
+                min_len = min(qend - qstart, rend - rstart)
+                if min_len > min(
+                    max_chain.rend - max_chain.rstart,
+                    max_chain.qend - max_chain.qstart
+                    ):
+                    max_chain = Chain(rstart, rend, qstart, qend)
+    
+    return max_chain
+
+
+# un-used
+def get_anchors(
+    reference_minimizer,
+    query_minimizer,
+    kmer_size
+    ) -> List[tuple]:
+    """
+    Find list of anchors
+    A 'anchor' is defined as tuple(rend, qend, anchor_length), while the
+    'anchor_length' is equal to (rend - rstart) and (qend - qstart)
+    """
+    anchors_list = []
+    for m_ref in reference_minimizer:
+        for m_qry in query_minimizer: 
+            if m_ref[1] == m_qry[1]:
+                anchors_list.append(
+                    Anchor(
+                        rstart=m_ref[0],
+                        rend = m_ref[0] + kmer_size,
+                        qstart=m_qry[0],
+                        qend = m_qry[0] + kmer_size
+                        )
+                    )
+    
+    return anchors_list
 
 
 class minimizer:
@@ -188,13 +231,17 @@ class minimizer:
             % 10**n
 
 
-# # for test
-# from Bio import SeqIO
-# in1 = "../output_fastp/forward_passed.fq"
-# in2 = "../output_fastp/reverse_passed.fq"
-# record_dict1 = SeqIO.index(in1, "fastq")
-# record_dict2 = SeqIO.index(in2, "fastq")
-# fwd = record_dict1["01_A07"]
-# rev = record_dict2["01_A07"].reverse_complement()
-# tryMerge(fwd, rev, 13, 8)
+# for test
+from Bio import SeqIO
+in1 = "../output_fastp/forward_passed.fq"
+in2 = "../output_fastp/reverse_passed.fq"
+record_dict1 = SeqIO.index(in1, "fastq")
+record_dict2 = SeqIO.index(in2, "fastq")
+for i in list(record_dict1.keys()):
+    try:
+        fwd = record_dict1[i]
+        rev = record_dict2[i].reverse_complement()
+        tryMerge(fwd, rev, 13, 8)
+    except KeyError:
+        pass
 
