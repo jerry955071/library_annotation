@@ -17,6 +17,10 @@ __pycache__/
 nohup*
 
 
+# for jupyter notebook
+.ipynb_checkpoints
+
+
 # workplace specific
 raw_sanger/*
 raw_fastq/*
@@ -27,6 +31,7 @@ output_minimap2/*
 output_samtools/*
 output_mappingReporter/*
 output_blastUnmapped/*
+sequencing_request/*
 logs/*
 scripts/debug.*/*
 report.html
