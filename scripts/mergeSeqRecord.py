@@ -234,8 +234,8 @@ class minimizer:
 # for test
 if __name__ == '__main__':
     from Bio import SeqIO
-    in1 = "../output_fastp/forward_passed.fq"
-    in2 = "../output_fastp/reverse_passed.fq"
+    in1 = "../raw_fastq/forward.fq"
+    in2 = "../raw_fastq/reverse.fq"
     record_dict1 = SeqIO.index(in1, "fastq")
     record_dict2 = SeqIO.index(in2, "fastq")
     for i in list(record_dict1.keys()):
