@@ -76,8 +76,9 @@ class AlignIO:
             opts = opts_dict
         )
 
-# # for test:
-# fin = "/home/woodformation/SSD3/CCC/project_Gilead/library_annotation/output_minimap2/single_human.sam"
-# with open(fin) as handle:
-#     for align in AlignIO(handle).AlignGenerator():
-#         print(align)
+# for test:
+if __name__ == '__main__':
+    fin = "/home/woodformation/SSD3/CCC/project_Gilead/library_annotation/output_minimap2/merge.sam"
+    with open(fin) as handle:
+        for align in AlignIO(handle).AlignGenerator():
+            print(align)
