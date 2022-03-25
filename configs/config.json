@@ -1,15 +1,16 @@
 {
-    "master": {
-        "raw_sangers": "raw_sanger/update_20220225"
+    "sanger2fastq": {
+        "input": "raw_sanger/update_20220225"
     },
     "fastp_qc": {
         "params":[
             "--phred64",
             "--cut_front",
             "--cut_tail",
-            "--cut_window_size 10",
-            "--cut_mean_quality 20",
-            "--length_required 50"        
+            "--cut_window_size 5",
+            "--cut_mean_quality 1",
+            "--length_required 50",
+            "--average_qual 1" 
         ]
     },
     "classifier":{
@@ -27,8 +28,12 @@
             "--no-end-flt `# dont filter end seed before base-level alignment`"
         ]
     },
-    "samtools_stats": {},
-    "samtools_flagstats": {},
+    "samtools_stats": {
+        "params": []
+    },
+    "samtools_flagstats": {
+        "params": []
+    },
     "samtools_view": {
         "params": [
             "-F 256 `# remove secondary alignments`",
