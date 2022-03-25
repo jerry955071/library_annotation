@@ -19,8 +19,8 @@ rule all:
         ),
         expand("output_mappingReporter/{fname}_summary.tsv", 
             fname=["merged", "single", "paired1", "paired2"]
-        ),
-        "output_blastUnmapped/blast.out"
+        )#,
+        #"output_blastUnmapped/blast.out"
     params:
         logs_dir="./logs"
     shell:
@@ -65,7 +65,7 @@ rule extract_cds:
             2> {log} 1> {log}
         
         
-        # combine human and mouse cds
+        # combine human and mouse cds.fa
         cat {output.human} {output.mouse} > {output.hnm}
         """
  
@@ -75,7 +75,7 @@ rule sanger2fastq:
     conda:
         "envs/project_gilead_chen.yml"
     input:
-        config["master"]["raw_sangers"]
+        config["sanger2fastq"]["input"]
     output:
         out1="raw_fastq/forward.fq",
         out2="raw_fastq/reverse.fq"
@@ -93,42 +93,13 @@ rule sanger2fastq:
         """
 
 
-# fastp was use to perform:
-    # 1. quality trimming
-    # 2. convert phred 64 to phred 33
-    # 3. generate an overall report    
-rule fastp_qc:
-    input:
-        "raw_fastq/{fname}.fq"
-    output:
-        out="output_fastp/{fname}_passed.fq",
-        failed="output_fastp/{fname}_failed.fq",
-        report_json="output_fastp/{fname}_report.json",
-        report_html="output_fastp/{fname}_report.html"
-    params:
-        space_join(config["fastp_qc"]["params"])
-    log:
-        "logs/fastp_{fname}.log"
-    shell:
-        """
-        fastp \
-            {params} \
-            --in1 {input} \
-            --out1 {output.out} \
-            --failed_out {output.failed} \
-            --json '{output.report_json}' \
-            --html '{output.report_html}' \
-            2> {log} 1> {log}
-        """
-
-
 # classify QC-passed reads into merged/single/paired1/paired2.fq
 rule classifier:
     conda:
         "envs/project_gilead_chen.yml"
     input:
-        in1="output_fastp/forward_passed.fq",
-        in2="output_fastp/reverse_passed.fq"
+        in1="raw_fastq/forward.fq",
+        in2="raw_fastq/reverse.fq"
     output:
         merged="output_classifier/merged.fq",
         single="output_classifier/single.fq",
@@ -375,3 +346,32 @@ rule template:
 #             2> {log.mouse} 1> {log.mouse}
 #         """
 
+
+# SKIP THIS STEP
+# # fastp was use to perform:
+#     # 1. quality trimming
+#     # 2. convert phred 64 to phred 33
+#     # 3. generate an overall report    
+# rule fastp_qc:
+#     input:
+#         "raw_fastq/{fname}.fq"
+#     output:
+#         out="output_fastp/{fname}_passed.fq",
+#         failed="output_fastp/{fname}_failed.fq",
+#         report_json="output_fastp/{fname}_report.json",
+#         report_html="output_fastp/{fname}_report.html"
+#     params:
+#         space_join(config["fastp_qc"]["params"])
+#     log:
+#         "logs/fastp_{fname}.log"
+#     shell:
+#         """
+#         fastp \
+#             {params} \
+#             --in1 {input} \
+#             --out1 {output.out} \
+#             --failed_out {output.failed} \
+#             --json '{output.report_json}' \
+#             --html '{output.report_html}' \
+#             2> {log} 1> {log}
+#         """
