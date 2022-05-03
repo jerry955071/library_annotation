@@ -1,7 +1,9 @@
 {   
     "raw_sanger": "raw_sanger/update_20220225",
     "sanger2fastq": {
-       "params": []
+       "params": [
+           "--pattern_rev '.*(ADR).*'"
+       ]
     },
     "mergeFastq":{
         "params":[
