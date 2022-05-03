@@ -121,7 +121,7 @@ for fname in sorted(os.listdir(gapped_fq)):
     ## design left primer on forward sequence
     p3in = ".p3in.tmp"
     p3out = ".p3out.tmp"    
-    n_subed = fwd_align.n_subed()
+    n_subed = fwd_align.n_substitued()
     end = -offset
     bclip = 0 if fwd_align.cigar.cigar_str[-1] != "S" else \
         fwd_align.cigar.cigar_int[-1]
@@ -171,7 +171,7 @@ for fname in sorted(os.listdir(gapped_fq)):
     if gap_on_ref > (1050 - offset * 2):
         p3in = ".p3in.tmp"
         p3out = ".p3out.tmp"    
-        n_subed = rev_align.n_subed()
+        n_subed = rev_align.n_substitued()
         start = offset
         fclip = 0 if rev_align.cigar.cigar_str[0] != "S" else \
             rev_align.cigar.cigar_int[0]
