@@ -16,22 +16,22 @@ class AlignIO:
             self.handle = open(handle, "r")
         except TypeError:
             self.handle = handle
-        self.header = []
     
-    def AlignGenerator(self):
+    def AlignGenerator(self, skip_header=True):
         # skip header lines
         for line in self.handle:
-            if line[:3] in AlignIO.header_parser.keys():
-                header_tag = line[1:3]
-                # use rstrip to remove '\n' at the end of line
-                line = line.rstrip()
-                # get header parser function
-                parser = AlignIO.header_parser[line[:3]]
-                self.header.append(parser(line))
+            tag = line[:3]
+            if tag in AlignIO.header_parser.keys():
+                if skip_header:
+                    continue
+                else:
+                    # use rstrip to remove '\n' at the end of line
+                    line = line.rstrip()
+                    # parse header line and append to self.header
+                    yield AlignIO.header_parser[tag](line)
             else:
+                yield AlignIO.AlignParser(line)
                 break
-
-        yield AlignIO.AlignParser(line)
 
         for line in self.handle:
             yield AlignIO.AlignParser(line)
@@ -78,7 +78,7 @@ class AlignIO:
 
 # for test:
 if __name__ == '__main__':
-    fin = "/home/woodformation/SSD3/CCC/project_Gilead/library_annotation/output_minimap2/merge.sam"
+    fin = "/home/woodformation/SSD3/CCC/project_Gilead/library_annotation/output/samtools/filtered/gapped_fastq.filtered.sam"
     with open(fin) as handle:
         for align in AlignIO(handle).AlignGenerator():
             print(align)
