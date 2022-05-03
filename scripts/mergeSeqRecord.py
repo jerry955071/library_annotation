@@ -73,7 +73,7 @@ def tryMerge(
             seq=forward.seq[:max_chain.rstart] + \
                 combined_bases + \
                 reverse.seq[max_chain.qend:],
-            id=forward.id,
+            id=f"{forward.id}|{reverse.id}",
             name=forward.name,
             description="",
             letter_annotations={
