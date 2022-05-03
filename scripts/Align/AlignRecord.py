@@ -122,3 +122,24 @@ class AlignRecord:
     # get numbers of error
     def get_n_error(self) -> int:
         return self.cigar.count("IXD")
+
+    
+    # generte 'N' substituded sequence
+    def n_substitued(self, M=None) -> str:
+        if not M:
+            M = {
+                "S": "",
+                "H": "",
+                "I": "N",
+                "D": "N",
+                "X": "N"
+            }
+        n_subed = ""
+        for cig, pos in self.cigar.positions(0, True):
+            if cig in M.keys():
+                if M[cig] != "":
+                    n_subed += M[cig] * (pos[1] - pos[0])
+            else:
+                n_subed += self.seq[pos[0]:pos[1]]
+
+        return n_subed

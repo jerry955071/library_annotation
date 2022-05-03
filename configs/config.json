@@ -1,16 +1,22 @@
-{
+{   
+    "raw_sanger": "raw_sanger/update_20220225",
     "sanger2fastq": {
-        "input": "raw_sanger/update_20220225"
+       "params": [
+           "--pattern_rev '.*(ADR).*'"
+       ]
+    },
+    "mergeFastq":{
+        "params":[
+            "-w 13",
+            "-k 8",
+            "--min_ovlp 30"
+        ]
     },
     "fastp_qc": {
         "params":[
             "--phred64",
-            "--cut_front",
-            "--cut_tail",
-            "--cut_window_size 5",
-            "--cut_mean_quality 1",
-            "--length_required 50",
-            "--average_qual 1" 
+            "--length_required 20",
+            "--average_qual 5" 
         ]
     },
     "classifier":{
@@ -18,6 +24,11 @@
             "-w 13",
             "-k 8",
             "--min_ovlp 30"
+        ]
+    },
+    "minimap2_index": {
+        "params": [
+            "-ax asm5"
         ]
     },
     "minimap2": {
@@ -36,10 +47,13 @@
     },
     "samtools_view": {
         "params": [
+            "-h `# keep headers`", 
             "-F 256 `# remove secondary alignments`",
-            "-F 2048 `# remove supplementary alignments`",
-            "-h"
+            "-F 2048 `# remove supplementary alignments`"
         ]
+    },
+    "designPrimer": {
+        "params": []
     },
     "mappingReporter": {},
     "blastUnmapped": {

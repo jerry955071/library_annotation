@@ -23,15 +23,11 @@ nohup*
 
 # workplace specific
 raw_sanger/*
-raw_fastq/*
 genomic_data/*
-output_classifier/*
-output_fastp/*
-output_minimap2/*
-output_samtools/*
-output_mappingReporter/*
-output_blastUnmapped/*
-sequencing_request/*
+outputs/*
+SEQUENCING_REQUESTS/*
 logs/*
+test/*
+tools/*
 scripts/debug.*/*
 report.html

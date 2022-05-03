@@ -1,4 +1,5 @@
 from typing import List
+
 # modify config file before run
 configfile: "configs/config.json"
 
@@ -9,31 +10,33 @@ def space_join(x:List[str]) -> str:
 
 
 # all
+REQUSTED_OUTPUTS = ["merged_fastq", "gapped_fastq"]
 rule all:
     input:
-        expand("output_samtools/stats/{fname}.stats", 
-            fname=["merged", "single", "paired1", "paired2"],
+        expand("outputs/samtools/{statistics}/{fname}.{statistics}", 
+            fname=REQUSTED_OUTPUTS,
+            statistics=["stats", "flagstat"]
         ),
-        expand("output_samtools/flagstats/{fname}.flagstat", 
-            fname=["merged", "single", "paired1", "paired2"]
-        ),
-        expand("output_mappingReporter/{fname}_summary.tsv", 
-            fname=["merged", "single", "paired1", "paired2"]
-        )#,
-        #"output_blastUnmapped/blast.out"
+        expand([
+            "outputs/mappingReporter/{fname}_summary.tsv",
+            "outputs/mappingReporter/{fname}_hist.txt",
+            "outputs/mappingReporter/{fname}_unmapped.fq"
+            ], 
+            fname=REQUSTED_OUTPUTS
+        )
     params:
         logs_dir="./logs"
     shell:
         """
-        # remove empty logs
-        DIR={params.logs_dir}
+        # # remove empty logs
+        # DIR={params.logs_dir}
 
-        for file in $(ls $DIR); 
-        do
-            if [[ ! -s $DIR/$file ]]; then
-                rm $DIR/$file
-            fi
-        done
+        # for file in $(ls $DIR); 
+        # do
+        #     if [[ ! -s $DIR/$file ]]; then
+        #         rm $DIR/$file
+        #     fi
+        # done
         """
 
 
@@ -68,61 +71,67 @@ rule extract_cds:
         # combine human and mouse cds.fa
         cat {output.human} {output.mouse} > {output.hnm}
         """
- 
+
 
 # get fastq from sanger sequecing results 
 rule sanger2fastq:
     conda:
         "envs/project_gilead_chen.yml"
     input:
-        config["sanger2fastq"]["input"]
+        config["raw_sanger"]
     output:
-        out1="raw_fastq/forward.fq",
-        out2="raw_fastq/reverse.fq"
+        directory("outputs/raw_fastq")
     log:
         "logs/sanger2fastq.log"
     shell:
         """
         python scripts/sanger2fastq.py \
-            -i {input} \
-            --out1 {output.out1} \
-            --out2 {output.out2} \
-            --suff1 ADF.ab1 \
-            --suff2 ADR.ab1 \
+            --in_dir {input} \
+            --out_dir {output} \
             2> {log} 1> {log}
         """
 
 
-# classify QC-passed reads into merged/single/paired1/paired2.fq
-rule classifier:
+# merge fastq by sample name 
+rule mergeFastq:
     conda:
         "envs/project_gilead_chen.yml"
     input:
-        in1="raw_fastq/forward.fq",
-        in2="raw_fastq/reverse.fq"
+        "outputs/raw_fastq/"
     output:
-        merged="output_classifier/merged.fq",
-        single="output_classifier/single.fq",
-        paired1="output_classifier/paired1.fq",
-        paired2="output_classifier/paired2.fq",
-        report="output_classifier/report.txt",
-        summary="output_classifier/summary.tsv"
+        merged=directory("outputs/merged_fastq/"),
+        gapped=directory("outputs/gapped_fastq/")
     params:
-        space_join(config["classifier"]["params"])
+        space_join(config["mergeFastq"]["params"])
     log:
-        "logs/classifier.log"
+        "logs/mergeFastq.log"
     shell:
         """
-        python scripts/classifier.py \
+        python scripts/mergeFastq.py \
             {params} \
-            --in1 {input.in1} \
-            --in2 {input.in2} \
-            --out_merged {output.merged} \
-            --out_single {output.single} \
-            --out_paired1 {output.paired1} \
-            --out_paired2 {output.paired2} \
-            --summary {output.summary} \
-            --report {output.report} \
+            --in_dir {input} \
+            --merged_dir {output.merged} \
+            --gapped_dir {output.gapped} \
+            2> {log} 1> {log}
+        """
+
+# indexing reference
+rule minimap2_index:
+    threads: 8
+    input:
+        "genomic_data/{target}.fa"
+    output:
+        "genomic_data/{target}.mmi"
+    params:
+        space_join(config["minimap2_index"]["params"])
+    log:
+        "logs/minimap2_index_{target}.log"
+    shell:
+        """
+        minimap2 \
+            {params} \
+            -d {output} \
+            {input} \
             2> {log} 1> {log}
         """
 
@@ -131,21 +140,22 @@ rule classifier:
 rule minimap2:
     threads: 8
     input:
-        query="output_classifier/{fname}.fq",
-        ref="genomic_data/gencode.HM.cds.fa"
+        in_dir="outputs/{fastq_dir}",
+        ref_idx="genomic_data/gencode.HM.cds.mmi"
     output:
-        "output_minimap2/{fname}.sam"
+        "outputs/minimap2/{fastq_dir}.sam"
     params:
         space_join(config["minimap2"]["params"])
     log:
-        "logs/minimap2_{fname}.log"
+        "logs/minimap2_{fastq_dir}.log"
     shell:
         """
+        cat {input.in_dir}/*.f*q | # cat all fastq/fq files
         minimap2 \
             {params} \
             -o {output} \
-            {input.ref} \
-            {input.query} \
+            {input.ref_idx} \
+            - \
             2> {log} 1> {log}
         """
 
@@ -153,9 +163,9 @@ rule minimap2:
 # generate stats
 rule samtools_stats:
     input:
-        "output_minimap2/{fname}.sam"
+        "outputs/minimap2/{fname}.sam"
     output:
-        "output_samtools/stats/{fname}.stats"
+        "outputs/samtools/stats/{fname}.stats"
     log:
         "logs/samtools_stats_{fname}.log"
     shell:
@@ -166,14 +176,14 @@ rule samtools_stats:
         """
 
 
-# generate flag stats
-rule samtools_flagstats:
+# generate flagstat
+rule samtools_flagstat:
     input:
-        "output_minimap2/{fname}.sam"
+        "outputs/minimap2/{fname}.sam"
     output:
-        "output_samtools/flagstats/{fname}.flagstat"
+        "outputs/samtools/flagstat/{fname}.flagstat"
     log:
-        "logs/samtools_flagstats_{fname}.log"
+        "logs/samtools_flagstat_{fname}.log"
     shell:
         """
         samtools flagstat \
@@ -185,9 +195,9 @@ rule samtools_flagstats:
 # remove secondary/supplementary records
 rule samtools_view:
     input:
-        "output_minimap2/{fname}.sam"
+        "outputs/minimap2/{fname}.sam"
     output:
-        "output_samtools/filtered/{fname}.sam"
+        "outputs/samtools/filtered/{fname}.filtered.sam"
     params:
         space_join(config["samtools_view"]["params"])
     log:
@@ -202,16 +212,42 @@ rule samtools_view:
         """
 
 
+# design primer
+Primer3 = "tools/primer3_core"
+p3_settings_file = "configs/primer3.config"
+rule primer3_caller:
+    conda:
+        "envs/project_gilead_chen.yml"
+    input:
+        gapped_fq="outputs/gapped_fastq/",
+        filtered_sam="outputs/samtools/filtered/gapped_fastq.filtered.sam"
+    output:
+        directory("outputs/primer3_caller/")
+    log:
+        stdout="logs/primer3_caller.out",
+        stderr="logs/primer3_caller.err"
+    shell:
+        """
+        python scripts/primer3_caller.py \
+            --p3 {Primer3} \
+            --p3_settings_file {p3_settings_file} \
+            --gapped_fq {input.gapped_fq} \
+            --filtered_sam {input.filtered_sam} \
+            --out_dir {output} \
+            2> {log.stderr} 1> {log.stdout}
+        """
+        
+
 # generate mapping reports
 rule mappingReporter:
     conda:
         "envs/project_gilead_chen.yml"
     input:
-        "output_samtools/filtered/{fname}.sam"
+        "outputs/samtools/filtered/{fname}.filtered.sam"
     output:
-        out_summary="output_mappingReporter/{fname}_summary.tsv",
-        out_hist="output_mappingReporter/{fname}_hist.txt",
-        out_unmapped="output_mappingReporter/{fname}_unmapped.fq"
+        out_summary="outputs/mappingReporter/{fname}_summary.tsv",
+        out_hist="outputs/mappingReporter/{fname}_hist.txt",
+        out_unmapped="outputs/mappingReporter/{fname}_unmapped.fq"
     log:
         "logs/mappingReporter_{fname}.log"
     shell:
@@ -231,17 +267,17 @@ rule blastUnmapped:
         "envs/project_gilead_chen.yml"
     input:
         expand(
-            "output_mappingReporter/{fname}_unmapped.fq",
+            "outputs/mappingReporter/{fname}_unmapped.fq",
             fname=["merged", "paired1", "paired2", "single"]
             )
     output:
-        fa="output_blastUnmapped/unmapped.fa",
-        blst="output_blastUnmapped/blast.out"
+        fa="outputs/blastUnmapped/unmapped.fa",
+        blst="outputs/blastUnmapped/blast.out"
     params:
         blastn=space_join(
             config["blastUnmapped"]["params"]["blastn"]
             ),
-        out_dir="output_blastUnmapped/"
+        out_dir="outputs/blastUnmapped/"
     log:
         py="logs/collectUnmapped.log",
         blst="logs/blastUnmapped.log"

@@ -24,14 +24,52 @@ parser.add_argument(
     default=30,
     type=int
 )
-parser.add_argument("--out_merged", help="merged fastq filename", type=str)
-parser.add_argument("--out_single", help="single-end fastq filename", type=str)
-parser.add_argument("--out_paired1", help="paired-end read1 filename", type=str)
-parser.add_argument("--out_paired2", help="paired-end read2 filename", type=str)
-parser.add_argument("--in1", help="input read1 file name", type=str)
-parser.add_argument("--in2", help="input read2 file name", type=str)
-parser.add_argument("--summary", help="output summary file name", type=str)
-parser.add_argument("--report", help="output report file name", type=str)
+parser.add_argument(
+    "--out_merged", 
+    help="merged fastq filename", 
+    type=str, 
+    default=None
+)
+parser.add_argument(
+    "--out_single", 
+    help="single-end fastq filename", 
+    type=str, 
+    default=None
+)
+parser.add_argument(
+    "--out_paired1", 
+    help="paired-end read1 filename", 
+    type=str, 
+    default=None
+)
+parser.add_argument(
+    "--out_paired2", 
+    help="paired-end read2 filename", 
+    type=str, 
+    default=None
+)
+parser.add_argument(
+    "--in1", 
+    help="input read1 file name", 
+    type=str
+)
+parser.add_argument(
+    "--in2", 
+    help="input read2 file name", 
+    type=str
+)
+parser.add_argument(
+    "--summary", 
+    help="output summary file name",
+    type=str,
+    default=None
+)
+parser.add_argument(
+    "--report",
+    help="output report file name",
+    type=str,
+    default=None
+)
 
 
 # get arguments from argparse 
@@ -47,6 +85,7 @@ in1 = args.in1
 in2 = args.in2
 out_report = args.report
 out_summary = args.summary
+
 
 # # for test
 # out_merged = "merged.tmp"
@@ -65,12 +104,16 @@ record_dict2 = SeqIO.index(in2, "fastq")
 
 
 # create output files (clear file if already exists)
-open(out_merged, "w").close()
-open(out_single, "w").close()
-open(out_paired1, "w").close()
-open(out_paired2, "w").close()
-open(out_report, "w").close()
-open(out_summary, "w").close()
+for f in [
+    out_merged, 
+    out_single, 
+    out_paired1, 
+    out_paired2, 
+    out_report, 
+    out_summary
+]:
+    if f:
+        open(f, "w").close()
 
 
 # initiate summary_dict
@@ -132,11 +175,12 @@ for name in all_samples:
             summary_dict["overlapped"].append(False)
 
             # output to file
-            with open(out_paired1, "a") as handle:
-                foo = SeqIO.write(fwd, handle, "fastq")
-            
-            with open(out_paired2, "a") as handle:
-                foo = SeqIO.write(rev, handle, "fastq")
+            if out_paired1:
+                with open(out_paired1, "a") as handle:
+                    foo = SeqIO.write(fwd, handle, "fastq")
+            if out_paired2:
+                with open(out_paired2, "a") as handle:
+                    foo = SeqIO.write(rev, handle, "fastq")
             
             continue
  
@@ -148,8 +192,9 @@ for name in all_samples:
             summary_dict["overlapped"].append(True)
 
             # output to file
-            with open(out_merged, "a") as handle:
-                foo = SeqIO.write(merged, handle, "fastq")
+            if out_merged:
+                with open(out_merged, "a") as handle:
+                    foo = SeqIO.write(merged, handle, "fastq")
             
             continue
 
@@ -164,8 +209,9 @@ for name in all_samples:
         summary_dict["overlapped"].append(False)
 
         # output to file
-        with open(out_single, "a") as handle:
-                foo = SeqIO.write(fwd, handle, "fastq")
+        if out_single:
+            with open(out_single, "a") as handle:
+                    foo = SeqIO.write(fwd, handle, "fastq")
         
         continue
     
@@ -181,24 +227,27 @@ for name in all_samples:
         summary_dict["overlapped"].append(False)
 
         # output to file
-        with open(out_single, "a") as handle:
-                foo = SeqIO.write(rev, handle, "fastq")
+        if out_single:
+            with open(out_single, "a") as handle:
+                    foo = SeqIO.write(rev, handle, "fastq")
 
         continue
 
 # output to summary.tsv
-pd_summary = pd.DataFrame(summary_dict)
-pd_summary.to_csv(out_summary, sep="\t", index=False)
+if out_summary:
+    pd_summary = pd.DataFrame(summary_dict)
+    pd_summary.to_csv(out_summary, sep="\t", index=False)
 
 
 # output report.txt
-with open(out_report, "a") as handle:
-    handle.write(
-        f"Number of single-end (SE) reads: {report_dict['se']}\n" + 
-        f"Number of paired-end (PE) reads: {report_dict['pe']}\n" + 
-        f"         ─ overlapping PE reads: {report_dict['pe_ovlp']}\n" + 
-        f"     ─ not-overlapping PE reads: {report_dict['pe_pair']}\n"
-        )
+if out_report:
+    with open(out_report, "a") as handle:
+        handle.write(
+            f"Number of single-end (SE) reads: {report_dict['se']}\n" + 
+            f"Number of paired-end (PE) reads: {report_dict['pe']}\n" + 
+            f"         ─ overlapping PE reads: {report_dict['pe_ovlp']}\n" + 
+            f"     ─ not-overlapping PE reads: {report_dict['pe_pair']}\n"
+            )
 
 
 # need_re_seq = []
