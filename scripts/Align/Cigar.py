@@ -1,47 +1,43 @@
 import re
-from typing import List
-
-"""Example:
->>> raw_cigar = '4I1=12I3=3I1=2I1=1I1=1I347='
->>> parsed_cigar = Cigar.fromstring(raw_cigar)
->>> parsed_cigar
-Cigar(
-    cigar_raw='4I1=12I3=3I1=2I1=1I1=1I347=', 
-    cigar_str=['I', '=', 'I', '=', 'I', '=', 'I', '=', 'I', '=', 'I', '='], 
-    cigar_int=[4, 1, 12, 3, 3, 1, 2, 1, 1, 1, 1, 347]
-    )
->>>
->>> for i in parsed_cigar:
-...     print(i)
-... 
-('I', (0, 4))
-('=', (4, 5))
-('I', (5, 17))
-('=', (17, 20))
-('I', (20, 23))
-('=', (23, 24))
-('I', (24, 26))
-('=', (26, 27))
-('I', (27, 28))
-('=', (28, 29))
-('I', (29, 30))
-('=', (30, 377))
->>> 
->>> sum(parsed_cigar.cigar_int)
-377
->>> parsed_cigar.nth_cigar(-1)
-(30, 377)
->>> parsed_cigar.where("I=")
-[(0, 4), (4, 5), (5, 17), (17, 20), (20, 23), (23, 24), (24, 26), (26, 27),
-(27, 28), (28, 29), (29, 30), (30, 377)]
+from typing import List, Tuple
 
 """
+Example:
+# parse `raw_cigar` into Cigar() object
+>>> raw_cigar = '20S22=12I33=20D21=30S'
+>>> parsed_cigar = Cigar.fromstring(raw_cigar)
+>>> parsed_cigar
+Cigar(cigar_raw='20S22=12I33=20D21=30S', cigar_str='S=I=D=S', cigar_int=(20, 22,
+ 12, 33, 20, 21, 30))
+
+# iterate over Cigar() object
+>>> for i in parsed_cigar:
+...     print(i)
+('S', (0, 20))
+('=', (20, 42))
+('I', (42, 54))
+('=', (54, 87))
+('D', (87, 87))
+('=', (87, 108))
+('S', (108, 138))
+
+# subscripting Cigar() object
+>>> parsed_cigar.nth_cigar(0)
+('S', (0, 20))
+>>> parsed_cigar.nth_cigar(-1)
+('S', (108, 138))
+
+# get query positions of the requested set of cigar character 
+>>> parsed_cigar.positions("=")
+[(20, 42), (54, 87), (87, 108)]
+"""
+
 class Cigar(object):
     def __init__(
             self, 
             cigar_raw:str,
-            cigar_str:List[str], 
-            cigar_int:List[int]
+            cigar_str:str, 
+            cigar_int:Tuple[int]
         ) -> None:
         # check length
         if not len(cigar_str) == len(cigar_int):
@@ -62,52 +58,71 @@ class Cigar(object):
         return self.cigar_raw
 
 
-    def __iter__(self):
-        for s, p in zip(self.cigar_str, self.positions("=XDISHP")):
-            yield (s, p)
-        return
-
     @staticmethod
     def fromstring(raw_cigar:str) -> object:
         p_str = re.compile("[M|I|D|N|S|H|P|=|X]")
         p_int = re.compile(r"\d+")
-        m_str = p_str.findall(raw_cigar)
-        m_int = [int(i) for i in p_int.findall(raw_cigar)]
+        m_str = "".join(p_str.findall(raw_cigar))
+        m_int = tuple([int(i) for i in p_int.findall(raw_cigar)])
 
         return Cigar(raw_cigar, m_str, m_int)
 
 
-    # get the start/end locations of the cigar provided by `pattern`
-    def positions(self, pattern: str) -> List[tuple]:
-        pos = []
-        for i, idx in zip(self.cigar_str, range(len(self.cigar_str))):
-            if i in pattern:
-                pos.append(self.nth_cigar(idx))
-        return pos
+    # get the query start/end locations of the cigar requested by `pattern`
+    # def positions(self, pos0: int=0, on_query: bool=True) -> List[tuple]:
+    #     pos = []
+    #     for i, idx in zip(self.cigar_str, range(len(self.cigar_str))):
+    #         pos.append((i, self.pos_nth_cigar(idx, pos0, on_query)))
+    #     return pos
+    
+
+    #
+    # def nth_cigar(self, n:int) -> Tuple[str, Tuple[int, int]]:
+    #     return (self.cigar_str[n], self.pos_nth_cigar(n))
 
 
-    # get the start/end location of the nth cigar string
-    def nth_cigar(self, n:int) -> tuple([int, int]):
-        # covert -1 to len(self.cigar_int)
-        if n < 0:
-            n = len(self.cigar_int) + n
-        # base stage
-        if n == 0:
-            return (0, self.cigar_int[n])
-        else:
-            # recursive
-            start = self.nth_cigar(n - 1)[-1]
-            end = start + self.cigar_int[n]
-            return (start, end)
+    # get the query/reference start, end location (0-based) of the nth cigar string
+    def positions(self, pos0:int, on_query:bool) -> tuple([int, int]):
+        SKIP = "DH" if on_query else "I"
+        ret = []
+        for i, s in zip(self.cigar_int, self.cigar_str):
+            # base stage
+            if len(ret) == 0:
+                # start 
+                if not on_query:
+                    start = pos0 if s not in "HS" else pos0 - i
+                else:
+                    start = pos0
+                # end
+                if s in SKIP:
+                    end = start
+                else:
+                    end = start + i
+                
+                ret.append(
+                    (s, (start, end))
+                    )
+            else:
+                # start
+                start = ret[-1][-1][-1]
+                # end 
+                if s in SKIP:
+                    end = start
+                else:
+                    end = start + i
+                ret.append(
+                    (s, (start, end))
+                    )
+        return ret
 
     
-    # get index of the cigar provided by `pattern`
-    def index(self, pattern:str) -> List[int]:
-        index = []
-        for i, idx in zip(self.cigar_str, range(len(self.cigar_str))):
-            if i in pattern:
-                index.append(idx)
-        return index
+    # # get index of the cigar provided by `pattern`
+    # def index(self, pattern:str) -> List[int]:
+    #     index = []
+    #     for i, idx in zip(self.cigar_str, range(len(self.cigar_str))):
+    #         if i in pattern:
+    #             index.append(idx)
+    #     return index
     
 
     # get number of the cigar provided by `pattern`
@@ -128,13 +143,13 @@ class Cigar(object):
 
 # Test
 if __name__ == "__main__":
-    raw_cigar = '4I1=12I3=3I1=2I1=1I1=1I347='
+    raw_cigar = '20S22=12I33=20D21=30S'
+    # parse `raw_cigar` into Cigar() object
     parsed_cigar = Cigar.fromstring(raw_cigar)
-    print(parsed_cigar)
-    
-    for i in parsed_cigar:
-        print(i)    
-    sum(parsed_cigar.cigar_int)
-    parsed_cigar.nth_cigar(-1)
-    parsed_cigar.positions("I=")
+    parsed_cigar
+
+    # subscripting Cigar() object
+    # parsed_cigar.nth_cigar(0)
+    # parsed_cigar.nth_cigar(-1)
+    parsed_cigar.positions(pos0=0, on_query=False)
 
