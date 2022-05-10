@@ -143,3 +143,11 @@ class AlignRecord:
                 n_subed += self.seq[pos[0]:pos[1]]
 
         return n_subed
+
+    def get_softclip(self) -> tuple:
+        front = back = 0
+        if self.cigar.cigar_str[0] == "S":
+            front = self.cigar.cigar_int[0]
+        if self.cigar.cigar_str[-1] == "S":
+            back = self.cigar.cigar_int[-1]
+        return (front, back)
