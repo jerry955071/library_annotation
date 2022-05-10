@@ -4,7 +4,6 @@ import sys
 import os
 import re
 import argparse
-import pandas as pd
 from typing import List
 
 
@@ -61,12 +60,11 @@ prog = re.compile(pattern)
 
 # file name sorter
 def sort_name_list(fnames:List[str]) -> List[str]:
-    infix_order = {
-        "ADF": 0,
-        "ADR": 99
-    }
-    fnames.sort(key=lambda x:infix_order[prog.match(x).group("infix")])
-    return fnames
+    # pattern = \
+    # "(?P<sample>[0-9]{2}_[A-Z][0-9]{2})_(?P<infix>.*)[.](?P<suff>f(ast)?q)"
+    # prog = re.compile(pattern)
+    # fnames.sort(key=lambda x:prog.match(x).group("infix"))
+    return fnames.sort()
 
 
 # get arguments from argparse 
