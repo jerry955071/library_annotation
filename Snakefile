@@ -10,7 +10,7 @@ def space_join(x:List[str]) -> str:
 
 
 # all
-REQUSTED_OUTPUTS = ["merged_fastq", "gapped_fastq"]
+REQUSTED_OUTPUTS = ["raw_fastq", "merged_fastq", "gapped_fastq"]
 rule all:
     input:
         expand("outputs/samtools/{statistics}/{fname}.{statistics}", 
@@ -215,24 +215,25 @@ rule samtools_view:
 # design primer
 Primer3 = "tools/primer3_core"
 p3_settings_file = "configs/primer3.config"
-rule primer3_caller:
+rule designPrimer:
     conda:
         "envs/project_gilead_chen.yml"
     input:
-        gapped_fq="outputs/gapped_fastq/",
-        filtered_sam="outputs/samtools/filtered/gapped_fastq.filtered.sam"
+        gapped_sam="outputs/samtools/filtered/gapped_fastq.filtered.sam"
     output:
-        directory("outputs/primer3_caller/")
+        directory("outputs/designPrimer/")
     log:
-        stdout="logs/primer3_caller.out",
-        stderr="logs/primer3_caller.err"
+        stdout="logs/designPrimer.out",
+        stderr="logs/designPrimer.err"
+    params:
+        space_join(config["designPrimer"]["params"])
     shell:
         """
-        python scripts/primer3_caller.py \
+        python scripts/designPrimer1.py \
+            {params} \
             --p3 {Primer3} \
             --p3_settings_file {p3_settings_file} \
-            --gapped_fq {input.gapped_fq} \
-            --filtered_sam {input.filtered_sam} \
+            --gapped_sam {input.gapped_sam} \
             --out_dir {output} \
             2> {log.stderr} 1> {log.stdout}
         """
